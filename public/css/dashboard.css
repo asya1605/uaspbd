@@ -1,0 +1,83 @@
+:root{
+  --bg:#f5f7fb;
+  --text:#0f172a;
+  --muted:#64748b;
+  --white:#fff;
+  --card:#ffffff;
+  --br:16px;
+
+  --role:#6b7280;    /* abu */
+  --user:#22c55e;    /* hijau */
+  --vendor:#f59e0b;  /* kuning */
+  --satuan:#14b8a6;  /* teal */
+  --barang:#ef4444;  /* merah */
+
+  --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+}
+
+body{background:var(--bg); color:var(--text)}
+.container{max-width:1100px; margin:24px auto 64px; padding:0 16px}
+
+/* topbar */
+.topbar{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; gap:12px;
+  background:var(--white); padding:10px 16px; box-shadow:var(--shadow);
+}
+.topbar .brand{font-weight:700}
+.topbar .spacer{flex:1}
+.welcome{color:var(--muted)}
+.btn-logout{
+  margin-left:10px; background:#ef4444; color:#fff; border:none;
+  padding:8px 12px; border-radius:10px; cursor:pointer;
+}
+.btn-logout:hover{filter:brightness(.95)}
+
+/* title */
+.page-title{
+  text-align:center; margin:22px 0 14px;
+  font-size:32px; letter-spacing:.2px;
+}
+
+/* badges */
+.badges{
+  display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.badge{
+  width:130px; background:#e5e7eb; color:#fff; border-radius:12px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:12px 10px; box-shadow:var(--shadow);
+}
+.badge .label{font-size:13px; opacity:.9}
+.badge .val{font-size:24px; font-weight:800; margin-top:6px}
+
+.b-role{background:var(--role)}
+.b-user{background:var(--user)}
+.b-vendor{background:var(--vendor)}
+.b-satuan{background:var(--satuan)}
+.b-barang{background:var(--barang)}
+
+/* cards grid */
+.grid{
+  display:grid; gap:18px;
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 900px){
+  .grid{grid-template-columns: repeat(2, 1fr);}
+}
+@media (max-width: 600px){
+  .grid{grid-template-columns: 1fr;}
+}
+.card{
+  background:var(--card); border-radius:var(--br); box-shadow:var(--shadow);
+  padding:24px; display:flex; flex-direction:column; align-items:center; text-align:center;
+}
+.card .icon{font-size:44px; margin:4px 0 8px}
+.card h3{margin-bottom:12px}
+.card .btn{
+  text-decoration:none; font-weight:700; color:#fff;
+  background:#2563eb; padding:10px 14px; border-radius:10px;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, .25);
+}
+.card .btn:hover{filter:brightness(.98)}

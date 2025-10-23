@@ -1,0 +1,44 @@
+/* Reset & base */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:#0f172a;background:#f6f8fb}
+
+/* NAVBAR */
+.nav{position:sticky;top:0;z-index:40;background:#ffffff;box-shadow:0 6px 24px rgba(2,6,23,.06)}
+.nav-inner{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center}
+.brand{font-weight:800;color:#0f172a;text-decoration:none;margin-right:12px}
+.links{display:flex;align-items:center;gap:14px;width:100%}
+.links a{color:#334155;text-decoration:none;padding:8px 10px;border-radius:10px;transition:background .15s}
+.links a:hover{background:#eef2ff}
+.links a.active{background:#e0e7ff;color:#1d4ed8;font-weight:700}
+
+.sep{width:1px;height:20px;background:#e5e7eb;margin:0 6px}
+.spacer{flex:1}
+
+.welcome{color:#475569}
+.logout-form{display:inline}
+.btn-logout{border:none;background:#ef4444;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+.btn-logout:hover{filter:brightness(.95)}
+
+/* Dropdown */
+.dropdown{position:relative}
+.drop-btn{border:none;background:transparent;cursor:pointer;color:#334155;padding:8px 10px;border-radius:10px}
+.drop-btn.active, .drop-btn:hover{background:#eef2ff}
+.drop-menu{
+  display:none; position:absolute; top:110%; left:0; min-width:220px;
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(2,6,23,.1);
+  overflow:hidden; z-index:50;
+}
+.dropdown:hover .drop-menu{display:block}
+.drop-menu a{display:block;padding:10px 12px;color:#0f172a;text-decoration:none}
+.drop-menu a:hover{background:#f1f5f9}
+
+/* Main & footer */
+.main{max-width:1100px;margin:24px auto;padding:0 16px}
+.footer{text-align:center;color:#94a3b8;padding:16px}
+
+/* Utility (boleh dipakai di page) */
+.page-title{text-align:center;margin:18px 0 10px;font-size:30px}
+.card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(2,6,23,.06);padding:18px}
+.btn{display:inline-block;text-decoration:none;background:#2563eb;color:#fff;border-radius:10px;padding:9px 12px}
+.btn:hover{filter:brightness(.98)}
