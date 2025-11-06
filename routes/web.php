@@ -7,74 +7,116 @@ use App\Http\Controllers\{
     VendorController,
     RoleController,
     UserController,
+    BarangController,
+    PengadaanController,
     PenjualanController,
-    BarangController
+    StokController
 };
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| 🏠 PUBLIC ACCESS
 |--------------------------------------------------------------------------
-| Versi tanpa middleware custom (RequireAuth / RequireRole)
-| Supaya semua fitur tetap bisa diakses sementara.
-| Nanti bisa diaktifkan kembali setelah sistem login stabil.
 */
+Route::get('/', fn () => view('landing'))->name('landing');
 
-# =========================
-# 🔓 PUBLIC (No Auth)
-# =========================
-Route::get('/', fn () => view('landing'));
-
+// 🔐 Authentication
 Route::get('/login', [AuthController::class, 'form'])->name('login.form');
 Route::post('/login', [AuthController::class, 'login'])->name('login.do');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-# =========================
-# 🔐 PRIVATE (sementara tanpa middleware)
-# =========================
-
-# Dashboard
 Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
-# =========================
-# 👑 SUPER ADMIN ACCESS
-# =========================
-Route::get('/satuan', [SatuanController::class, 'index'])->name('satuan.index');
-Route::post('/satuan', [SatuanController::class, 'store'])->name('satuan.store');
-Route::post('/satuan/{id}/update', [SatuanController::class, 'update'])->name('satuan.update');
-Route::post('/satuan/{id}/delete', [SatuanController::class, 'delete'])->name('satuan.delete');
+/*
+|--------------------------------------------------------------------------
+| ⚙️ MASTER DATA MODULES
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/vendor', [VendorController::class, 'index'])->name('vendor.index');
-Route::post('/vendor', [VendorController::class, 'store'])->name('vendor.store');
-Route::post('/vendor/{id}/update', [VendorController::class, 'update'])->name('vendor.update');
-Route::post('/vendor/{id}/delete', [VendorController::class, 'delete'])->name('vendor.delete');
+// === Role ===
+Route::prefix('role')->name('role.')->group(function () {
+    Route::get('/', [RoleController::class, 'index'])->name('index');
+    Route::post('/', [RoleController::class, 'store'])->name('store');
+    Route::post('{id}/update', [RoleController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [RoleController::class, 'delete'])->name('delete');
+});
 
-Route::get('/role', [RoleController::class, 'index'])->name('role.index');
-Route::post('/role', [RoleController::class, 'store'])->name('role.store');
-Route::post('/role/{id}/update', [RoleController::class, 'update'])->name('role.update');
-Route::post('/role/{id}/delete', [RoleController::class, 'delete'])->name('role.delete');
+// === User ===
+Route::prefix('users')->name('users.')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('index');
+    Route::post('/', [UserController::class, 'store'])->name('store');
+    Route::post('{id}/update', [UserController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [UserController::class, 'delete'])->name('delete');
+});
 
-Route::get('/users', [UserController::class, 'index'])->name('users.index');
-Route::post('/users', [UserController::class, 'store'])->name('users.store');
-Route::post('/users/{id}/update', [UserController::class, 'update'])->name('users.update');
-Route::post('/users/{id}/delete', [UserController::class, 'delete'])->name('users.delete');
+// === Vendor ===
+Route::prefix('vendor')->name('vendor.')->group(function () {
+    Route::get('/', [VendorController::class, 'index'])->name('index');
+    Route::post('/', [VendorController::class, 'store'])->name('store');
+    Route::post('{id}/update', [VendorController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [VendorController::class, 'delete'])->name('delete');
+});
 
-Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
-Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
-Route::post('/barang/{id}/update', [BarangController::class, 'update'])->name('barang.update');
-Route::post('/barang/{id}/delete', [BarangController::class, 'delete'])->name('barang.delete');
+// === Satuan ===
+Route::prefix('satuan')->name('satuan.')->group(function () {
+    Route::get('/', [SatuanController::class, 'index'])->name('index');
+    Route::post('/', [SatuanController::class, 'store'])->name('store');
+    Route::post('{id}/update', [SatuanController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [SatuanController::class, 'delete'])->name('delete');
+});
 
-# =========================
-# 🧾 ADMIN ACCESS
-# =========================
-Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
-Route::get('/penjualan/create', [PenjualanController::class, 'create'])->name('penjualan.create');
-Route::post('/penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
-Route::post('/penjualan/{id}/items', [PenjualanController::class, 'addItem'])->name('penjualan.addItem');
+// === Barang ===
+Route::prefix('barang')->name('barang.')->group(function () {
+    Route::get('/', [BarangController::class, 'index'])->name('index');
+    Route::post('/', [BarangController::class, 'store'])->name('store');
+    Route::post('{id}/update', [BarangController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [BarangController::class, 'delete'])->name('delete');
+});
 
-# =========================
-# ⚠️ FALLBACK (404)
-# =========================
+/*
+|--------------------------------------------------------------------------
+| 📦 PENGADAAN MODULE
+|--------------------------------------------------------------------------
+*/
+Route::prefix('pengadaan')->name('pengadaan.')->group(function () {
+    Route::get('/', [PengadaanController::class, 'index'])->name('index');
+    Route::get('/create', [PengadaanController::class, 'create'])->name('create');
+    Route::post('/', [PengadaanController::class, 'store'])->name('store');
+    Route::get('{id}/items', [PengadaanController::class, 'items'])->name('items');
+    Route::post('{id}/items', [PengadaanController::class, 'addItem'])->name('addItem');
+});
+
+/*
+|--------------------------------------------------------------------------
+| 💰 PENJUALAN MODULE
+|--------------------------------------------------------------------------
+*/
+Route::prefix('penjualan')->name('penjualan.')->group(function () {
+    Route::get('/', [PenjualanController::class, 'index'])->name('index');
+    Route::get('/create', [PenjualanController::class, 'create'])->name('create');
+    Route::post('/', [PenjualanController::class, 'store'])->name('store');
+    Route::get('{id}/items', [PenjualanController::class, 'items'])->name('items');
+    Route::post('{id}/items', [PenjualanController::class, 'addItem'])->name('addItem');
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🧾 STOK MODULE
+|--------------------------------------------------------------------------
+|
+| Mengatur form update stok dan proses insert stok masuk/keluar
+| Controller: StokController
+|
+*/
+Route::prefix('stok')->name('stok.')->group(function () {
+    Route::get('/update', [StokController::class, 'index'])->name('update');
+    Route::post('/update', [StokController::class, 'update'])->name('update.post');
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🚨 FALLBACK (404 PAGE)
+|--------------------------------------------------------------------------
+*/
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 });

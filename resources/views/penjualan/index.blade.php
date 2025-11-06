@@ -1,34 +1,45 @@
-@extends('layout')
-@section('title','Penjualan')  {{-- JANGAN pakai @endsection untuk title --}}
+@extends('layouts.master')
+@section('title','Kelola Penjualan')
 
 @section('content')
-<h1 class="page-title">Penjualan</h1>
+<h1 class="page-title">Daftar Penjualan</h1>
+
+@if(session('ok'))
+  <div class="alert-ok">{{ session('ok') }}</div>
+@endif
+@if($errors->any())
+  <div class="alert-err">{{ $errors->first() }}</div>
+@endif
 
 <div class="card">
-  <p><a class="btn" href="/penjualan/create">+ Buat Penjualan</a></p>
-  <table border="0" width="100%" cellpadding="10" style="border-collapse:collapse;margin-top:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="margin:0">Data Penjualan</h2>
+    <a href="{{ route('penjualan.create') }}" class="btn" style="background:#2563eb">+ Buat Penjualan</a>
+  </div>
+
+  <table>
     <thead>
-      <tr style="background:#f8fafc">
-        <th align="left">ID</th>
-        <th align="left">Tanggal</th>
-        <th align="left">User</th>
-        <th align="left">Subtotal</th>
-        <th align="left">PPN</th>
-        <th align="left">Total</th>
+      <tr>
+        <th>ID</th>
+        <th>Tanggal</th>
+        <th>User</th>
+        <th>Subtotal</th>
+        <th>PPN</th>
+        <th>Total</th>
       </tr>
     </thead>
     <tbody>
       @forelse($rows as $r)
-      <tr style="border-top:1px solid #eef2f7">
+      <tr>
         <td>{{ $r->idpenjualan }}</td>
         <td>{{ $r->created_at }}</td>
         <td>{{ $r->username }}</td>
-        <td>{{ number_format($r->subtotal_nilai,2) }}</td>
-        <td>{{ number_format($r->ppn,2) }}</td>
-        <td>{{ number_format($r->total_nilai,2) }}</td>
+        <td>Rp {{ number_format($r->subtotal_nilai,0,',','.') }}</td>
+        <td>Rp {{ number_format($r->ppn,0,',','.') }}</td>
+        <td><b>Rp {{ number_format($r->total_nilai,0,',','.') }}</b></td>
       </tr>
       @empty
-      <tr><td colspan="6">Belum ada penjualan.</td></tr>
+      <tr><td colspan="6" align="center">Belum ada penjualan.</td></tr>
       @endforelse
     </tbody>
   </table>

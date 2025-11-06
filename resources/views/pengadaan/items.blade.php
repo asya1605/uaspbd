@@ -1,8 +1,8 @@
 @extends('layouts.master')
-@section('title','Detail Penjualan')
+@section('title','Detail Pengadaan')
 
 @section('content')
-<h1 class="page-title">Detail Penjualan #{{ $penjualan->idpenjualan }}</h1>
+<h1 class="page-title">Detail Pengadaan #{{ $pengadaan->idpengadaan }}</h1>
 
 @if(session('ok'))
   <div class="alert-ok">{{ session('ok') }}</div>
@@ -11,23 +11,25 @@
   <div class="alert-err">{{ $errors->first() }}</div>
 @endif
 
-{{-- Informasi Penjualan --}}
+{{-- Informasi Pengadaan --}}
 <div class="card" style="margin-bottom:20px">
-  <h2>Informasi Penjualan</h2>
+  <h2>Informasi Pengadaan</h2>
   <table width="100%" cellpadding="6">
-    <tr><td width="150">ID Penjualan</td><td>: {{ $penjualan->idpenjualan }}</td></tr>
-    <tr><td>User</td><td>: {{ $penjualan->username }}</td></tr>
-    <tr><td>Subtotal</td><td>: Rp {{ number_format($penjualan->subtotal_nilai,0,',','.') }}</td></tr>
-    <tr><td>PPN</td><td>: Rp {{ number_format($penjualan->ppn,0,',','.') }}</td></tr>
-    <tr><td><b>Total</b></td><td>: <b>Rp {{ number_format($penjualan->total_nilai,0,',','.') }}</b></td></tr>
-    <tr><td>Waktu</td><td>: {{ $penjualan->created_at }}</td></tr>
+    <tr><td width="150">ID Pengadaan</td><td>: {{ $pengadaan->idpengadaan }}</td></tr>
+    <tr><td>User Input</td><td>: {{ $pengadaan->user_input }}</td></tr>
+    <tr><td>Vendor</td><td>: {{ $pengadaan->nama_vendor }}</td></tr>
+    <tr><td>Status</td><td>: {{ $pengadaan->status == '1' ? 'Aktif' : 'Nonaktif' }}</td></tr>
+    <tr><td>Subtotal</td><td>: Rp {{ number_format($pengadaan->subtotal_nilai,0,',','.') }}</td></tr>
+    <tr><td>PPN</td><td>: Rp {{ number_format($pengadaan->ppn,0,',','.') }}</td></tr>
+    <tr><td><b>Total</b></td><td>: <b>Rp {{ number_format($pengadaan->total_nilai,0,',','.') }}</b></td></tr>
+    <tr><td>Waktu</td><td>: {{ $pengadaan->timestamp }}</td></tr>
   </table>
 </div>
 
-{{-- Form Tambah Barang ke Penjualan --}}
+{{-- Form Tambah Barang --}}
 <div class="card" style="margin-bottom:20px">
-  <h2>Tambah Barang ke Penjualan</h2>
-  <form method="POST" action="{{ route('penjualan.addItem', $penjualan->idpenjualan) }}">
+  <h2>Tambah Barang ke Pengadaan</h2>
+  <form method="POST" action="{{ route('pengadaan.addItem', $pengadaan->idpengadaan) }}">
     @csrf
     <div style="margin-bottom:10px">
       <label>Nama Barang</label><br>
@@ -53,9 +55,9 @@
   </form>
 </div>
 
-{{-- Daftar Barang dalam Penjualan --}}
+{{-- Daftar Barang --}}
 <div class="card">
-  <h2>Daftar Barang Penjualan Ini</h2>
+  <h2>Daftar Barang Pengadaan Ini</h2>
   <table>
     <thead>
       <tr>
@@ -69,7 +71,7 @@
     <tbody>
       @forelse($details as $d)
       <tr>
-        <td>{{ $d->iddetail_penjualan }}</td>
+        <td>{{ $d->iddetail_pengadaan }}</td>
         <td>{{ $d->nama_barang }}</td>
         <td>Rp {{ number_format($d->harga_satuan,0,',','.') }}</td>
         <td align="center">{{ $d->jumlah }}</td>
@@ -83,6 +85,6 @@
 </div>
 
 <div style="margin-top:20px">
-  <a href="{{ route('penjualan.index') }}" class="btn" style="background:#2563eb">← Kembali ke Daftar Penjualan</a>
+  <a href="{{ route('pengadaan.index') }}" class="btn" style="background:#2563eb">← Kembali ke Daftar Pengadaan</a>
 </div>
 @endsection

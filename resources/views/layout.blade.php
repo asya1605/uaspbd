@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>@yield('title','CRUD Proyek PBD')</title>
+  <title>@yield('title','Proyek PBD')</title>
+  
+  {{-- FONT & STYLE --}}
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ asset('css/app-ui.css') }}">
@@ -11,25 +13,25 @@
 </head>
 <body>
 
-  {{-- NAVBAR GLOBAL --}}
-    @php
-         $me = session('user');
-        $role = strtolower($me['role'] ?? '');
-        $username = $me['username'] ?? ($role ?: 'User');
-
-        // buat penanda menu aktif
-        $path = request()->path();
-        $is = fn($p) => str_starts_with($path, trim($p,'/')) ? 'active' : '';
-    @endphp
+  {{-- =============================
+       🔹 NAVBAR GLOBAL
+  ============================== --}}
+  @php
+      $me = session('user');
+      $role = strtolower($me['role'] ?? '');
+      $username = $me['username'] ?? 'User';
+      $path = request()->path();
+      $is = fn($p) => str_starts_with($path, trim($p,'/')) ? 'active' : '';
+  @endphp
 
   <header class="nav">
     <div class="nav-inner">
-      <a class="brand" href="/dashboard">⚙️ CRUD Proyek PBD</a>
+      <a class="brand" href="/dashboard">⚙️ Proyek PBD</a>
 
       <nav class="links">
         <a class="{{ $is('dashboard') }}" href="/dashboard">Dashboard</a>
 
-        {{-- ===== MENU MASTER: hanya untuk super_admin ===== --}}
+        {{-- ===== MASTER DATA: hanya super_admin ===== --}}
         @if($role === 'super_admin')
           <a class="{{ $is('satuan') }}" href="/satuan">Satuan</a>
           <a class="{{ $is('vendor') }}" href="/vendor">Vendor</a>
@@ -38,20 +40,20 @@
           <a class="{{ $is('users') }}" href="/users">Users</a>
         @endif
 
-        {{-- ===== TRANSAKSI PENJUALAN: admin & super_admin boleh ===== --}}
+        {{-- ===== TRANSAKSI: admin & super_admin ===== --}}
         @if(in_array($role, ['admin','super_admin']))
           <a class="{{ $is('penjualan') }}" href="/penjualan">Penjualan</a>
+          <a class="{{ $is('pengadaan') }}" href="/pengadaan">Pengadaan</a>
         @endif
 
         <div class="sep"></div>
 
-        {{-- Laporan/View (boleh untuk admin & super_admin; sesuaikan kalau perlu) --}}
+        {{-- ===== VIEW / LAPORAN ===== --}}
         <div class="dropdown">
-          <button class="drop-btn {{ in_array($path, ['view-pengadaan','view-stok','view-penjualan-harian']) ? 'active' : '' }}">
+          <button type="button" class="drop-btn {{ str_starts_with($path,'view-') ? 'active' : '' }}">
             Laporan ▾
           </button>
           <div class="drop-menu">
-            <a href="/view-pengadaan">View Pengadaan</a>
             <a href="/view-stok">View Stok</a>
             <a href="/view-penjualan-harian">Penjualan Harian</a>
           </div>
@@ -59,10 +61,14 @@
 
         <div class="spacer"></div>
 
+        {{-- ===== USER SECTION ===== --}}
         <span class="welcome">
-            Welcome, <b>{{ $username }}</b>
-            @if($role) <small style="opacity:.7">({{ $role }})</small> @endif
+          Welcome, <b>{{ $username }}</b>
+          @if($role)
+            <small style="opacity:.7">({{ $role }})</small>
+          @endif
         </span>
+
         <form method="POST" action="/logout" class="logout-form">@csrf
           <button type="submit" class="btn-logout">Logout</button>
         </form>
@@ -70,15 +76,39 @@
     </div>
   </header>
 
-  {{-- KONTEN HALAMAN --}}
+  {{-- =============================
+       🔹 KONTEN UTAMA
+  ============================== --}}
   <main class="main">
     @yield('content')
   </main>
 
-  {{-- FOOTER SIMPLE --}}
+  {{-- =============================
+       🔹 FOOTER
+  ============================== --}}
   <footer class="footer">
-    <small>© {{ date('Y') }} CRUD Proyek PBD.</small>
+    <small>© {{ date('Y') }} Proyek PBD — D4 Teknik Informatika.</small>
   </footer>
+
+  {{-- =============================
+       🔹 SCRIPT
+  ============================== --}}
+  <script>
+    // buat dropdown laporan bisa toggle
+    document.querySelectorAll('.drop-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const menu = btn.nextElementSibling;
+        document.querySelectorAll('.drop-menu').forEach(m => {
+          if (m !== menu) m.classList.remove('show');
+        });
+        menu.classList.toggle('show');
+        e.stopPropagation();
+      });
+    });
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.drop-menu').forEach(m => m.classList.remove('show'));
+    });
+  </script>
 
   @stack('scripts')
 </body>
