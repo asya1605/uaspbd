@@ -2,34 +2,36 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
-class Pengadaan extends Model
+class Pengadaan
 {
-    use HasFactory;
-
-    protected $table = 'pengadaan';
-    protected $primaryKey = 'idpengadaan';
-    public $timestamps = false;
-
-    protected $fillable = [
-        'timestamp', 'user_iduser', 'vendor_idvendor',
-        'status', 'subtotal_nilai', 'ppn', 'total_nilai'
-    ];
-
-    public function user()
+    // Ambil semua pengadaan dari VIEW
+    public static function all()
     {
-        return $this->belongsTo(User::class, 'user_iduser', 'iduser');
+        return DB::select("SELECT * FROM pengadaan_vu ORDER BY idpengadaan DESC");
     }
 
-    public function vendor()
+    // Simpan pengadaan baru lewat Stored Procedure
+    public static function create($user_id, $vendor_id, $status, $subtotal, $ppn)
     {
-        return $this->belongsTo(Vendor::class, 'vendor_idvendor', 'idvendor');
+        DB::statement("CALL tambah_pengadaan(?, ?, ?, ?, ?)", [
+            $user_id, $vendor_id, $status, $subtotal, $ppn
+        ]);
     }
 
-    public function details()
+    // Tambah detail pengadaan (pakai SP)
+    public static function addItem($idpengadaan, $idbarang, $harga, $jumlah)
     {
-        return $this->hasMany(DetailPengadaan::class, 'idpengadaan', 'idpengadaan');
+        DB::statement("CALL tambah_detail_pengadaan(?, ?, ?, ?)", [
+            $idpengadaan, $idbarang, $harga, $jumlah
+        ]);
+    }
+
+    // Hapus pengadaan (hapus juga detailnya)
+    public static function delete($id)
+    {
+        DB::delete("DELETE FROM detail_pengadaan WHERE idpengadaan = ?", [$id]);
+        DB::delete("DELETE FROM pengadaan WHERE idpengadaan = ?", [$id]);
     }
 }

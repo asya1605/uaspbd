@@ -3,14 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
-    SatuanController,
-    VendorController,
     RoleController,
     UserController,
+    VendorController,
+    SatuanController,
     BarangController,
     PengadaanController,
+    PenerimaanController,
     PenjualanController,
-    StokController
+    ReturrController,
+    KartuStokController,
+    MarginPenjualanController
 };
 
 /*
@@ -21,100 +24,133 @@ use App\Http\Controllers\{
 Route::get('/', fn () => view('landing'))->name('landing');
 
 // 🔐 Authentication
-Route::get('/login', [AuthController::class, 'form'])->name('login.form');
-Route::post('/login', [AuthController::class, 'login'])->name('login.do');
-Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::controller(AuthController::class)->group(function () {
+    Route::get('/login', 'form')->name('login.form');
+    Route::post('/login', 'login')->name('login.do');
+    Route::get('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/logout', 'logout')->name('logout');
+});
 
 /*
 |--------------------------------------------------------------------------
 | ⚙️ MASTER DATA MODULES
 |--------------------------------------------------------------------------
+| Semua modul utama yang sifatnya data master (tidak otomatisasi stok)
+|--------------------------------------------------------------------------
 */
 
 // === Role ===
-Route::prefix('role')->name('role.')->group(function () {
-    Route::get('/', [RoleController::class, 'index'])->name('index');
-    Route::post('/', [RoleController::class, 'store'])->name('store');
-    Route::post('{id}/update', [RoleController::class, 'update'])->name('update');
-    Route::post('{id}/delete', [RoleController::class, 'delete'])->name('delete');
+Route::prefix('role')->name('role.')->controller(RoleController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 // === User ===
-Route::prefix('users')->name('users.')->group(function () {
-    Route::get('/', [UserController::class, 'index'])->name('index');
-    Route::post('/', [UserController::class, 'store'])->name('store');
-    Route::post('{id}/update', [UserController::class, 'update'])->name('update');
-    Route::post('{id}/delete', [UserController::class, 'delete'])->name('delete');
+Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 // === Vendor ===
-Route::prefix('vendor')->name('vendor.')->group(function () {
-    Route::get('/', [VendorController::class, 'index'])->name('index');
-    Route::post('/', [VendorController::class, 'store'])->name('store');
-    Route::post('{id}/update', [VendorController::class, 'update'])->name('update');
-    Route::post('{id}/delete', [VendorController::class, 'delete'])->name('delete');
+Route::prefix('vendor')->name('vendor.')->controller(VendorController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 // === Satuan ===
-Route::prefix('satuan')->name('satuan.')->group(function () {
-    Route::get('/', [SatuanController::class, 'index'])->name('index');
-    Route::post('/', [SatuanController::class, 'store'])->name('store');
-    Route::post('{id}/update', [SatuanController::class, 'update'])->name('update');
-    Route::post('{id}/delete', [SatuanController::class, 'delete'])->name('delete');
+Route::prefix('satuan')->name('satuan.')->controller(SatuanController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 // === Barang ===
-Route::prefix('barang')->name('barang.')->group(function () {
-    Route::get('/', [BarangController::class, 'index'])->name('index');
-    Route::post('/', [BarangController::class, 'store'])->name('store');
-    Route::post('{id}/update', [BarangController::class, 'update'])->name('update');
-    Route::post('{id}/delete', [BarangController::class, 'delete'])->name('delete');
+Route::prefix('barang')->name('barang.')->controller(BarangController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 /*
 |--------------------------------------------------------------------------
-| 📦 PENGADAAN MODULE
+| 💼 TRANSAKSI MODULES
+|--------------------------------------------------------------------------
+| Semua aktivitas yang memengaruhi stok & keuangan.
 |--------------------------------------------------------------------------
 */
-Route::prefix('pengadaan')->name('pengadaan.')->group(function () {
-    Route::get('/', [PengadaanController::class, 'index'])->name('index');
-    Route::get('/create', [PengadaanController::class, 'create'])->name('create');
-    Route::post('/', [PengadaanController::class, 'store'])->name('store');
-    Route::get('{id}/items', [PengadaanController::class, 'items'])->name('items');
-    Route::post('{id}/items', [PengadaanController::class, 'addItem'])->name('addItem');
+
+// 📦 PENGADAAN
+Route::prefix('pengadaan')->name('pengadaan.')->controller(PengadaanController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/create', 'create')->name('create');
+    Route::post('/', 'store')->name('store');
+    Route::get('{id}/items', 'items')->name('items');
+    Route::post('{id}/items', 'addItem')->name('addItem');
+});
+
+// 📥 PENERIMAAN
+Route::prefix('penerimaan')->name('penerimaan.')->controller(PenerimaanController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/create', 'create')->name('create');
+    Route::post('/', 'store')->name('store');
+    Route::get('{id}/items', 'items')->name('items');
+    Route::post('{id}/items', 'addItem')->name('addItem');
+});
+
+// 💰 PENJUALAN
+Route::prefix('penjualan')->name('penjualan.')->controller(PenjualanController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/create', 'create')->name('create');
+    Route::post('/', 'store')->name('store');
+    Route::get('{id}/items', 'items')->name('items');
+    Route::post('{id}/items', 'addItem')->name('addItem');
+});
+
+// 🔁 RETUR
+Route::prefix('retur')->name('retur.')->controller(ReturrController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/create', 'create')->name('create');
+    Route::post('/', 'store')->name('store');
+    Route::get('{idretur}/items', 'items')->name('items');
+    Route::post('{idretur}/items', 'addItem')->name('addItem');
+});
+
+// 🧾 KARTU STOK
+Route::prefix('kartu-stok')->name('kartu.')->controller(KartuStokController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/delete', 'delete')->name('delete');
+});
+
+// 💹 LAPORAN MARGIN PENJUALAN
+Route::prefix('margin-penjualan')->name('margin.')->controller(MarginPenjualanController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::post('{id}/update', 'update')->name('update');
+    Route::post('{id}/delete', 'delete')->name('delete');
 });
 
 /*
 |--------------------------------------------------------------------------
-| 💰 PENJUALAN MODULE
+| 🔧 UTILITAS STOK MANUAL (update stok)
+|--------------------------------------------------------------------------
+| Halaman update stok manual seperti di view `stok.index`
 |--------------------------------------------------------------------------
 */
-Route::prefix('penjualan')->name('penjualan.')->group(function () {
-    Route::get('/', [PenjualanController::class, 'index'])->name('index');
-    Route::get('/create', [PenjualanController::class, 'create'])->name('create');
-    Route::post('/', [PenjualanController::class, 'store'])->name('store');
-    Route::get('{id}/items', [PenjualanController::class, 'items'])->name('items');
-    Route::post('{id}/items', [PenjualanController::class, 'addItem'])->name('addItem');
-});
+Route::get('/update-stok', [KartuStokController::class, 'index'])->name('stok.update');
+Route::post('/update-stok', [KartuStokController::class, 'store'])->name('stok.update.post');
 
 /*
 |--------------------------------------------------------------------------
-| 🧾 STOK MODULE
-|--------------------------------------------------------------------------
-|
-| Mengatur form update stok dan proses insert stok masuk/keluar
-| Controller: StokController
-|
-*/
-Route::prefix('stok')->name('stok.')->group(function () {
-    Route::get('/update', [StokController::class, 'index'])->name('update');
-    Route::post('/update', [StokController::class, 'update'])->name('update.post');
-});
-
-/*
-|--------------------------------------------------------------------------
-| 🚨 FALLBACK (404 PAGE)
+| 🚨 FALLBACK (404)
 |--------------------------------------------------------------------------
 */
 Route::fallback(function () {

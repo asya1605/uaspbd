@@ -2,40 +2,46 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
-class User extends Authenticatable
+class User
 {
-    use HasFactory;
-
-    protected $table = 'user';
-    protected $primaryKey = 'iduser';
-    public $timestamps = false;
-
-    protected $fillable = [
-        'username',
-        'email',
-        'password',
-        'idrole',
-        'status'
-    ];
-
-    // Relasi ke Role
-    public function role()
+    public static function all()
     {
-        return $this->belongsTo(Role::class, 'idrole', 'idrole');
+        return DB::select("SELECT * FROM user_vu ORDER BY iduser DESC");
     }
 
-    // Relasi ke Pengadaan
-    public function pengadaans()
+    public static function create($username, $email, $password, $idrole, $status)
     {
-        return $this->hasMany(Pengadaan::class, 'user_iduser', 'iduser');
+        $hash = Hash::make($password);
+        DB::insert("
+            INSERT INTO user (username, email, password, idrole, status)
+            VALUES (?, ?, ?, ?, ?)
+        ", [$username, $email, $hash, $idrole, $status]);
     }
 
-    // Relasi ke Penjualan
-    public function penjualans()
+    public static function updateData($id, $username, $email, $password, $idrole, $status)
     {
-        return $this->hasMany(Penjualan::class, 'iduser', 'iduser');
+        if ($password) {
+            $hash = Hash::make($password);
+            DB::update("
+                UPDATE user SET username=?, email=?, password=?, idrole=?, status=? WHERE iduser=?
+            ", [$username, $email, $hash, $idrole, $status, $id]);
+        } else {
+            DB::update("
+                UPDATE user SET username=?, email=?, idrole=?, status=? WHERE iduser=?
+            ", [$username, $email, $idrole, $status, $id]);
+        }
+    }
+
+    public static function delete($id)
+    {
+        DB::delete("DELETE FROM user WHERE iduser=?", [$id]);
+    }
+
+    public static function getRoles()
+    {
+        return DB::select("SELECT idrole, nama_role FROM role ORDER BY nama_role");
     }
 }

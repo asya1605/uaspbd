@@ -7,17 +7,13 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    // ==============================
-    // 🪪 Tampilkan form login
-    // ==============================
+    //  Tampilkan form login
     public function form()
     {
         return view('auth.login');
     }
 
-    // ==============================
-    // 🔐 Proses login (tanpa bcrypt)
-    // ==============================
+    //  Proses login (tanpa bcrypt)
     public function login(Request $r)
     {
         $r->validate([
@@ -25,7 +21,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // ✅ Ambil data user beserta role-nya
+        //  Ambil data user beserta role-nya
         $user = DB::selectOne("
             SELECT u.iduser, u.username, u.password, u.idrole,
                    COALESCE(r.nama_role, 'Unknown') AS nama_role,
@@ -36,22 +32,22 @@ class AuthController extends Controller
             LIMIT 1
         ", [$r->username]);
 
-        // 🚫 Username tidak ditemukan
+        //  Username tidak ditemukan
         if (!$user) {
             return back()->withErrors(['error' => 'Username tidak ditemukan.']);
         }
 
-        // 🚫 Password salah (tanpa hash)
+        // Password salah (tanpa hash)
         if ($r->password !== $user->password) {
             return back()->withErrors(['error' => 'Password salah.']);
         }
 
-        // 🚫 Akun dinonaktifkan
+        //  Akun dinonaktifkan
         if (isset($user->status) && $user->status != 1) {
             return back()->withErrors(['error' => 'Akun dinonaktifkan.']);
         }
 
-        // 💾 Simpan data user ke session
+        //  Simpan data user ke session
         $r->session()->put('user', [
             'iduser'   => $user->iduser,
             'username' => $user->username,
@@ -59,13 +55,11 @@ class AuthController extends Controller
             'role'     => strtolower($user->nama_role ?? 'unknown'),
         ]);
 
-        // ✅ Redirect ke dashboard
+        //  Redirect ke dashboard
         return redirect()->route('dashboard');
     }
 
-    // ==============================
-    // 🧭 Dashboard ringkasan data
-    // ==============================
+    // Dashboard ringkasan data
     public function dashboard()
     {
         $counts = [
@@ -82,9 +76,7 @@ class AuthController extends Controller
         return view('dashboard.index', compact('counts', 'username'));
     }
 
-    // ==============================
-    // 🚪 Logout
-    // ==============================
+    //  Logout
     public function logout(Request $r)
     {
         $r->session()->forget('user');

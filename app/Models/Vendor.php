@@ -2,21 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
-class Vendor extends Model
+class Vendor
 {
-    use HasFactory;
-
-    protected $table = 'vendor';
-    protected $primaryKey = 'idvendor';
-    public $timestamps = false;
-
-    protected $fillable = ['nama_vendor', 'badan_hukum', 'status'];
-
-    public function pengadaans()
+    public static function all()
     {
-        return $this->hasMany(Pengadaan::class, 'vendor_idvendor', 'idvendor');
+        return DB::select("SELECT * FROM vendor_vu ORDER BY idvendor DESC");
+    }
+
+    public static function create($nama_vendor, $badan_hukum, $status)
+    {
+        DB::insert("INSERT INTO vendor (nama_vendor, badan_hukum, status) VALUES (?, ?, ?)", [
+            $nama_vendor, $badan_hukum, $status
+        ]);
+    }
+
+    public static function updateData($id, $nama_vendor, $badan_hukum, $status)
+    {
+        DB::update("UPDATE vendor SET nama_vendor=?, badan_hukum=?, status=? WHERE idvendor=?", [
+            $nama_vendor, $badan_hukum, $status, $id
+        ]);
+    }
+
+    public static function delete($id)
+    {
+        DB::delete("DELETE FROM vendor WHERE idvendor=?", [$id]);
     }
 }

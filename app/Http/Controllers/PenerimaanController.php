@@ -7,26 +7,23 @@ use Illuminate\Support\Facades\DB;
 
 class PenerimaanController extends Controller
 {
-    //  Menampilkan daftar penerimaan
+    // 📋 Daftar penerimaan
     public function index()
     {
-        // Ambil semua data dari view penerimaan_vu
         $rows = DB::select("SELECT * FROM penerimaan_vu ORDER BY idpenerimaan DESC");
-
         return view('penerimaan.index', compact('rows'));
     }
 
-    // Form tambah penerimaan baru
+    // 🧾 Form Tambah Penerimaan
     public function create()
     {
-        // Ambil daftar pengadaan & user aktif
-        $pengadaan = DB::select("SELECT idpengadaan FROM pengadaan ORDER BY idpengadaan DESC");
-        $users = DB::select("SELECT iduser, username FROM user WHERE status = 1 ORDER BY username");
+        $pengadaan = DB::select("SELECT idpengadaan FROM pengadaan_vu ORDER BY idpengadaan DESC");
+        $users = DB::select("SELECT iduser, username FROM user_vu WHERE status = 1 ORDER BY username");
 
         return view('penerimaan.create', compact('pengadaan', 'users'));
     }
 
-    //  Simpan penerimaan baru
+    // 💾 Simpan penerimaan baru
     public function store(Request $r)
     {
         $r->validate([
@@ -43,10 +40,10 @@ class PenerimaanController extends Controller
         $idpenerimaan = DB::getPdo()->lastInsertId();
 
         return redirect("/penerimaan/$idpenerimaan/items")
-               ->with('ok', 'Data penerimaan berhasil dibuat.');
+            ->with('ok', '✅ Penerimaan baru berhasil dibuat.');
     }
 
-    //  Tambah detail penerimaan barang
+    // ➕ Tambah detail penerimaan
     public function addItem($id, Request $r)
     {
         $r->validate([
@@ -57,35 +54,35 @@ class PenerimaanController extends Controller
 
         $subTotal = $r->jumlah_terima * $r->harga_satuan_terima;
 
-        DB::insert("
-            INSERT INTO detail_penerimaan (idpenerimaan, idbarang, jumlah_terima, harga_satuan_terima, sub_total_terima)
-            VALUES (?, ?, ?, ?, ?)
-        ", [$id, $r->idbarang, $r->jumlah_terima, $r->harga_satuan_terima, $subTotal]);
+        DB::beginTransaction();
+        try {
+            DB::insert("
+                INSERT INTO detail_penerimaan (idpenerimaan, idbarang, jumlah_terima, harga_satuan_terima, sub_total_terima)
+                VALUES (?, ?, ?, ?, ?)
+            ", [$id, $r->idbarang, $r->jumlah_terima, $r->harga_satuan_terima, $subTotal]);
 
-        // Tidak perlu update stok manual di controller.
-
-        return redirect("/penerimaan/$id/items")
-               ->with('ok', 'Barang penerimaan berhasil ditambahkan.');
+            DB::commit();
+            return redirect("/penerimaan/$id/items")->with('ok', '✅ Barang penerimaan berhasil ditambahkan.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->withErrors(['msg' => '❌ Gagal menambahkan barang penerimaan.'])->withInput();
+        }
     }
 
-    //  Detail barang per penerimaan
+    // 📋 Detail penerimaan
     public function items($id)
     {
-        $penerimaan = DB::selectOne("
-            SELECT * FROM penerimaan_vu WHERE idpenerimaan=?
-        ", [$id]);
-
+        $penerimaan = DB::selectOne("SELECT * FROM penerimaan_vu WHERE idpenerimaan=?", [$id]);
         $details = DB::select("
-            SELECT dpn.iddetail_penerimaan, b.nama AS nama_barang, s.nama_satuan, dpn.jumlah_terima,
-                   dpn.harga_satuan_terima, dpn.sub_total_terima
+            SELECT dpn.iddetail_penerimaan, b.nama AS nama_barang, s.nama_satuan,
+                   dpn.jumlah_terima, dpn.harga_satuan_terima, dpn.sub_total_terima
             FROM detail_penerimaan dpn
             JOIN barang b ON b.idbarang = dpn.idbarang
             JOIN satuan s ON s.idsatuan = b.idsatuan
             WHERE dpn.idpenerimaan = ?
             ORDER BY dpn.iddetail_penerimaan DESC
         ", [$id]);
-
-        $barangList = DB::select("SELECT idbarang, nama FROM barang ORDER BY nama");
+        $barangList = DB::select("SELECT idbarang, nama FROM barang WHERE status=1 ORDER BY nama");
 
         return view('penerimaan.items', compact('penerimaan', 'details', 'barangList'));
     }

@@ -2,21 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
-class Role extends Model
+class Role
 {
-    use HasFactory;
-
-    protected $table = 'role';
-    protected $primaryKey = 'idrole';
-    public $timestamps = false;
-
-    protected $fillable = ['nama_role'];
-
-    public function users()
+    public static function all()
     {
-        return $this->hasMany(User::class, 'idrole', 'idrole');
+        return DB::select("SELECT * FROM role_vu ORDER BY idrole ASC");
+    }
+
+    public static function create($nama_role)
+    {
+        DB::insert("INSERT INTO role (nama_role) VALUES (?)", [$nama_role]);
+    }
+
+    public static function updateData($id, $nama_role)
+    {
+        DB::update("UPDATE role SET nama_role=? WHERE idrole=?", [$nama_role, $id]);
+    }
+
+    public static function delete($id)
+    {
+        DB::delete("DELETE FROM role WHERE idrole=?", [$id]);
     }
 }
