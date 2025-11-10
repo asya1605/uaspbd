@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class PengadaanController extends Controller
 {
-    // 📋 Daftar pengadaan (gunakan view atau tabel)
+    // 📋 Daftar pengadaan
     public function index()
     {
         $rows = DB::select("SELECT * FROM pengadaan_vu ORDER BY idpengadaan DESC");
@@ -17,34 +17,72 @@ class PengadaanController extends Controller
     // ➕ Form Tambah Pengadaan
     public function create()
     {
-        $users = DB::select("SELECT iduser, username FROM user_vu WHERE status = 1 ORDER BY username");
-        $vendors = DB::select("SELECT idvendor, nama_vendor FROM vendor_vu ORDER BY nama_vendor");
-        return view('pengadaan.create', compact('users', 'vendors'));
+        $vendors = DB::select("SELECT * FROM vendor ORDER BY nama_vendor");
+        $barangs = DB::select("
+            SELECT b.idbarang, b.nama, b.harga, s.nama_satuan
+            FROM barang b
+            JOIN satuan s ON s.idsatuan = b.idsatuan
+            ORDER BY b.nama
+        ");
+        return view('pengadaan.create', compact('vendors', 'barangs'));
     }
 
-    // 💾 Simpan Pengadaan Baru (panggil SP)
+    // 💾 Simpan Pengadaan Baru (langsung lengkap)
     public function store(Request $r)
     {
         $r->validate([
-            'user_iduser' => 'required|integer',
             'vendor_idvendor' => 'required|integer',
             'status' => 'required|in:0,1',
             'subtotal_nilai' => 'required|numeric|min:0',
-            'ppn' => 'required|numeric|min:0',
+            'list_json' => 'required|string'
         ]);
 
-        DB::statement("CALL sp_tambah_pengadaan(?, ?, ?, ?, ?)", [
-            $r->user_iduser,
+        // 🧍 Ambil iduser dari session login
+        $user = session('user');
+        if (!$user) {
+            return redirect()->route('login.form')->withErrors(['error' => 'Silakan login terlebih dahulu.']);
+        }
+
+        $iduser = $user['iduser'];
+
+        // 🧾 Simpan data utama ke tabel pengadaan
+        DB::statement("
+            INSERT INTO pengadaan (
+                user_iduser, vendor_idvendor, status,
+                subtotal_nilai, ppn, total_nilai, total_barang, timestamp
+            )
+            VALUES (?, ?, ?, ?, hitung_ppn(?), (? + hitung_ppn(?)), 0, NOW())
+        ", [
+            $iduser,
             $r->vendor_idvendor,
             $r->status,
             $r->subtotal_nilai,
-            $r->ppn
+            $r->subtotal_nilai,
+            $r->subtotal_nilai,
+            $r->subtotal_nilai
         ]);
 
-        return redirect('/pengadaan')->with('ok', '✅ Pengadaan baru berhasil ditambahkan.');
+        // Ambil ID pengadaan terakhir
+        $idpengadaan = DB::getPdo()->lastInsertId();
+
+        // 🧩 Simpan detail barang dari list JSON (jika ada)
+        $list = json_decode($r->list_json, true);
+        if ($list && count($list) > 0) {
+            foreach ($list as $item) {
+                DB::statement("CALL tambah_detail_pengadaan(?, ?, ?, ?)", [
+                    $idpengadaan,
+                    $item['idbarang'],
+                    $item['harga'],
+                    $item['jumlah']
+                ]);
+            }
+        }
+
+        return redirect()->route('pengadaan.index')
+            ->with('ok', '✅ Pengadaan dan detail barang berhasil ditambahkan.');
     }
 
-    // 🧾 Tambah Barang ke Detail Pengadaan
+    // 🧾 Tambah Barang dari halaman detail pengadaan
     public function addItem($id, Request $r)
     {
         $r->validate([
@@ -53,7 +91,7 @@ class PengadaanController extends Controller
             'jumlah' => 'required|integer|min:1'
         ]);
 
-        DB::statement("CALL sp_tambah_detail_pengadaan(?, ?, ?, ?)", [
+        DB::statement("CALL tambah_detail_pengadaan(?, ?, ?, ?)", [
             $id,
             $r->idbarang,
             $r->harga_satuan,
@@ -61,6 +99,29 @@ class PengadaanController extends Controller
         ]);
 
         return back()->with('ok', '🧾 Barang berhasil ditambahkan ke pengadaan.');
+    }
+
+    // 🔍 Detail Barang Pengadaan
+    public function items($id)
+    {
+        // Ambil data pengadaan dari view
+        $pengadaan = DB::selectOne("SELECT * FROM pengadaan_vu WHERE idpengadaan = ?", [$id]);
+
+        // Ambil daftar detail barang
+        $items = DB::select("
+            SELECT dp.iddetail_pengadaan, dp.harga_satuan, dp.jumlah, dp.sub_total,
+                   b.nama AS nama_barang
+            FROM detail_pengadaan dp
+            JOIN barang b ON b.idbarang = dp.idbarang
+            WHERE dp.idpengadaan = ?
+        ", [$id]);
+
+        // 🔧 Kirim variabel yang sesuai ke Blade
+        return view('pengadaan.items', [
+            'pengadaan' => $pengadaan,
+            'items' => $items,
+            'idpengadaan' => $id // ✅ Fix error Undefined variable $idpengadaan
+        ]);
     }
 
     // ❌ Hapus Pengadaan

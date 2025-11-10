@@ -36,7 +36,7 @@ class VendorController extends Controller
     }
 
     // ✏️ Update vendor
-    public function update($id, Request $r)
+    public function update(Request $r, $id)
     {
         $r->validate([
             'nama_vendor' => 'required|string|max:100',
@@ -63,5 +63,27 @@ class VendorController extends Controller
     {
         DB::delete("DELETE FROM vendor WHERE idvendor=?", [$id]);
         return redirect('/vendor')->with('ok', '🗑️ Vendor berhasil dihapus.');
+    }
+
+    // 🔍 Cek vendor duplikat (untuk JS auto-check)
+    public function check(Request $r)
+    {
+        if (!$r->filled(['nama_vendor', 'badan_hukum'])) {
+            return response()->json(['found' => false]);
+        }
+
+        $vendor = DB::table('vendor')
+            ->where('nama_vendor', $r->nama_vendor)
+            ->where('badan_hukum', $r->badan_hukum)
+            ->first();
+
+        if ($vendor) {
+            return response()->json([
+                'found' => true,
+                'data' => $vendor
+            ]);
+        }
+
+        return response()->json(['found' => false]);
     }
 }

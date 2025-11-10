@@ -7,47 +7,82 @@ use Illuminate\Http\Request;
 
 class MarginPenjualanController extends Controller
 {
+    /**
+     * 🩷 Tampilkan semua data margin penjualan
+     */
     public function index()
     {
-        $rows = DB::select("SELECT * FROM margin_penjualan_vu ORDER BY idmargin DESC");
-        return view('margin.index', compact('rows'));
+        try {
+            $rows = DB::select("
+                SELECT 
+                    idmargin_penjualan AS idmargin,
+                    persen AS persentase,
+                    status
+                FROM margin_penjualan
+                ORDER BY idmargin_penjualan DESC
+            ");
+
+            return view('margin-penjualan.index', compact('rows'));
+        } catch (\Exception $e) {
+            return back()->withErrors(['Database error: ' . $e->getMessage()]);
+        }
     }
 
+    /**
+     * 💾 Tambah data margin baru
+     */
     public function store(Request $r)
     {
         $r->validate([
-            'persen' => 'required|numeric|min:0|max:100',
-            'status' => 'required|in:0,1',
-            'iduser' => 'required|integer'
-        ]);
-
-        DB::insert("
-            INSERT INTO margin_penjualan (persen, status, iduser)
-            VALUES (?, ?, ?)
-        ", [$r->persen, $r->status, $r->iduser]);
-
-        return redirect('/margin')->with('ok', '✅ Margin berhasil ditambahkan.');
-    }
-
-    public function update($id, Request $r)
-    {
-        $r->validate([
-            'persen' => 'required|numeric|min:0|max:100',
+            'persentase' => 'required|numeric|min:0|max:100',
             'status' => 'required|in:0,1'
         ]);
 
-        DB::update("
-            UPDATE margin_penjualan
-            SET persen=?, status=?
-            WHERE idmargin=?
-        ", [$r->persen, $r->status, $id]);
+        try {
+            DB::insert("
+                INSERT INTO margin_penjualan (persen, status, created_at, updated_at)
+                VALUES (?, ?, NOW(), NOW())
+            ", [$r->persentase, $r->status]);
 
-        return redirect('/margin')->with('ok', '✏️ Margin berhasil diperbarui.');
+            return redirect()->route('margin.index')->with('ok', '✅ Margin penjualan berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Database error: ' . $e->getMessage()]);
+        }
     }
 
+    /**
+     * ✏️ Update data margin
+     */
+    public function update($id, Request $r)
+    {
+        $r->validate([
+            'persentase' => 'required|numeric|min:0|max:100',
+            'status' => 'required|in:0,1'
+        ]);
+
+        try {
+            DB::update("
+                UPDATE margin_penjualan
+                SET persen=?, status=?, updated_at=NOW()
+                WHERE idmargin_penjualan=?
+            ", [$r->persentase, $r->status, $id]);
+
+            return redirect()->route('margin.index')->with('ok', '✏️ Margin penjualan berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Database error: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * 🗑️ Hapus data margin
+     */
     public function delete($id)
     {
-        DB::delete("DELETE FROM margin_penjualan WHERE idmargin=?", [$id]);
-        return redirect('/margin')->with('ok', '🗑️ Margin berhasil dihapus.');
+        try {
+            DB::delete("DELETE FROM margin_penjualan WHERE idmargin_penjualan=?", [$id]);
+            return redirect()->route('margin.index')->with('ok', '🗑️ Margin penjualan berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['Database error: ' . $e->getMessage()]);
+        }
     }
 }

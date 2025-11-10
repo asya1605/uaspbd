@@ -16,9 +16,8 @@
     @csrf
 
     <div style="margin-bottom:12px;">
-      <label for="idpengadaan" style="font-weight:600;">ID Pengadaan</label>
-      <select name="idpengadaan" id="idpengadaan" required
-              style="width:100%;padding:10px;border:1px solid #f9a8d4;border-radius:8px;">
+      <label style="font-weight:600;">ID Pengadaan</label>
+      <select name="idpengadaan" required class="w-full border border-pink-200 rounded-lg p-2">
         <option value="">-- Pilih Pengadaan --</option>
         @foreach($pengadaan as $p)
           <option value="{{ $p->idpengadaan }}">{{ $p->idpengadaan }}</option>
@@ -27,9 +26,8 @@
     </div>
 
     <div style="margin-bottom:12px;">
-      <label for="iduser" style="font-weight:600;">User Input</label>
-      <select name="iduser" id="iduser" required
-              style="width:100%;padding:10px;border:1px solid #f9a8d4;border-radius:8px;">
+      <label style="font-weight:600;">User Input</label>
+      <select name="iduser" required class="w-full border border-pink-200 rounded-lg p-2">
         <option value="">-- Pilih User --</option>
         @foreach($users as $u)
           <option value="{{ $u->iduser }}">{{ $u->username }}</option>
@@ -37,19 +35,8 @@
       </select>
     </div>
 
-    <div style="margin-bottom:12px;">
-      <label for="status" style="font-weight:600;">Status</label>
-      <select name="status" id="status" required
-              style="width:100%;padding:10px;border:1px solid #f9a8d4;border-radius:8px;">
-        <option value="1">Aktif</option>
-        <option value="0">Nonaktif</option>
-      </select>
-    </div>
-
-    <button type="submit"
-            style="background:#ec4899;color:white;border:none;border-radius:10px;
-                   padding:12px 40px;font-weight:600;cursor:pointer;">
-      💗 Simpan Penerimaan
+    <button type="submit" style="background:#ec4899;color:white;border:none;border-radius:10px;padding:12px 40px;font-weight:600;cursor:pointer;">
+      💗 Buat Penerimaan (Status: Pending)
     </button>
     <a href="{{ route('penerimaan.index') }}" style="margin-left:10px;color:#555;">Batal</a>
   </form>

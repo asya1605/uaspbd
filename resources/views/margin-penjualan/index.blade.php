@@ -1,5 +1,5 @@
 @extends('layouts.master')
-@section('title', 'Kelola Role')
+@section('title', 'Kelola Margin Penjualan')
 
 @section('content')
 <style>
@@ -49,13 +49,10 @@
     box-shadow: inset 0 -3px 0 #c67c8f;
   }
 
-  .form-section {
-    margin-top: 30px;
-    display: none;
-  }
+  .form-section { margin-top: 30px; display: none; }
   .form-section.active { display: block; }
 
-  form input {
+  form input, form select {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #f8cadd;
@@ -124,27 +121,46 @@
 <div class="container">
   {{-- 🌸 Header Tabs --}}
   <div class="header-tabs">
-    <h2>Kelola Role 💼</h2>
+    <h2>Kelola Margin Penjualan 💰</h2>
     <div class="tab-buttons">
       <button id="tab-create" class="tab-btn active">Create</button>
       <button id="tab-table" class="tab-btn">Table</button>
     </div>
   </div>
 
-  {{-- 🌸 Create Form --}}
+  {{-- 🌸 Form Input --}}
   <div id="form-section" class="form-section active">
-    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Role</h3>
+    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Margin Penjualan</h3>
 
-    <form id="roleForm" method="POST" action="{{ route('role.store') }}">
+    @if(session('ok'))
+      <div style="background:#e9fff1;color:#065f46;border-left:5px solid #10b981;padding:10px 16px;border-radius:8px;margin-bottom:12px;">
+        {{ session('ok') }}
+      </div>
+    @endif
+    @if($errors->any())
+      <div style="background:#ffe8ef;color:#7a2e3c;border-left:5px solid #f69ab3;padding:10px 16px;border-radius:8px;margin-bottom:12px;">
+        {{ $errors->first() }}
+      </div>
+    @endif
+
+    <form id="marginForm" method="POST" action="{{ route('margin.store') }}">
       @csrf
-      <input type="hidden" id="edit_id" name="idrole">
+      <input type="hidden" id="edit_id" name="idmargin">
 
       <div class="form-group">
-        <label>Nama Role</label>
-        <input type="text" name="nama_role" id="nama_role" placeholder="Masukkan nama role (mis. admin, kasir, manajer)" required>
+        <label>Persentase Margin (%)</label>
+        <input type="number" step="0.01" name="persentase" id="persentase" placeholder="Masukkan persentase margin (mis. 10 atau 15.5)" required>
       </div>
 
-      <button type="submit" class="btn-submit" id="submitBtn">ADD ROLE</button>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" id="status" required>
+          <option value="1">Aktif</option>
+          <option value="0">Nonaktif</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">ADD MARGIN</button>
     </form>
   </div>
 
@@ -154,26 +170,32 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>Nama Role</th>
+          <th>Persentase Margin (%)</th>
+          <th>Status</th>
           <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
-        @foreach($rows as $r)
+        @forelse($rows as $r)
         <tr>
-          <td>{{ $r->idrole }}</td>
-          <td>{{ $r->nama_role }}</td>
+          <td>{{ $r->idmargin }}</td>
+          <td>{{ number_format($r->persentase, 2) }}</td>
+          <td>{{ $r->status == 1 ? 'Aktif' : 'Nonaktif' }}</td>
           <td>
             <button class="btn btn-update"
-              onclick="editRole('{{ $r->idrole }}', '{{ $r->nama_role }}')">Edit</button>
+              onclick="editMargin('{{ $r->idmargin }}', '{{ $r->persentase }}', '{{ $r->status }}')">Edit</button>
 
-            <form action="{{ route('role.delete', $r->idrole) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus role ini?')">
+            <form action="{{ route('margin.delete', $r->idmargin) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus data margin ini?')">
               @csrf
               <button type="submit" class="btn btn-delete">Hapus</button>
             </form>
           </td>
         </tr>
-        @endforeach
+        @empty
+        <tr>
+          <td colspan="4" style="text-align:center;padding:15px;">Belum ada data margin 😢</td>
+        </tr>
+        @endforelse
       </tbody>
     </table>
   </div>
@@ -186,7 +208,7 @@
   const tableSection = document.getElementById('table-section');
   const formTitle = document.getElementById('form-title');
   const submitBtn = document.getElementById('submitBtn');
-  const roleForm = document.getElementById('roleForm');
+  const marginForm = document.getElementById('marginForm');
 
   tabCreate.addEventListener('click', () => {
     tabCreate.classList.add('active');
@@ -203,21 +225,22 @@
     formSection.classList.remove('active');
   });
 
-  function editRole(id, nama_role) {
+  function editMargin(id, persentase, status) {
     tabCreate.click();
-    formTitle.textContent = "Form Edit Role";
-    submitBtn.textContent = "UPDATE ROLE";
-    roleForm.action = `/role/${id}/update`;
+    formTitle.textContent = "Form Edit Margin Penjualan";
+    submitBtn.textContent = "UPDATE MARGIN";
+    marginForm.action = `/margin-penjualan/${id}/update`;
 
     document.getElementById('edit_id').value = id;
-    document.getElementById('nama_role').value = nama_role;
+    document.getElementById('persentase').value = persentase;
+    document.getElementById('status').value = status;
   }
 
   function resetForm() {
-    formTitle.textContent = "Form Input Role";
-    submitBtn.textContent = "ADD ROLE";
-    roleForm.action = "{{ route('role.store') }}";
-    roleForm.reset();
+    formTitle.textContent = "Form Input Margin Penjualan";
+    submitBtn.textContent = "ADD MARGIN";
+    marginForm.action = "{{ route('margin.store') }}";
+    marginForm.reset();
   }
 </script>
 @endsection

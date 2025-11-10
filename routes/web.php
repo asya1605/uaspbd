@@ -45,7 +45,9 @@ Route::prefix('role')->name('role.')->controller(RoleController::class)->group(f
     Route::post('/', 'store')->name('store');
     Route::post('{id}/update', 'update')->name('update');
     Route::post('{id}/delete', 'delete')->name('delete');
+    Route::post('/check', 'check')->name('check'); // 🔍 AJAX cek duplikat
 });
+
 
 // === User ===
 Route::prefix('users')->name('users.')->controller(UserController::class)->group(function () {
@@ -53,7 +55,9 @@ Route::prefix('users')->name('users.')->controller(UserController::class)->group
     Route::post('/', 'store')->name('store');
     Route::post('{id}/update', 'update')->name('update');
     Route::post('{id}/delete', 'delete')->name('delete');
+    Route::post('/check', 'check')->name('check'); // 🔍 optional AJAX duplikat
 });
+
 
 // === Vendor ===
 Route::prefix('vendor')->name('vendor.')->controller(VendorController::class)->group(function () {
@@ -61,7 +65,9 @@ Route::prefix('vendor')->name('vendor.')->controller(VendorController::class)->g
     Route::post('/', 'store')->name('store');
     Route::post('{id}/update', 'update')->name('update');
     Route::post('{id}/delete', 'delete')->name('delete');
+    Route::post('/check', 'check')->name('check'); // ✅ tambahan untuk AJAX duplikat
 });
+
 
 // === Satuan ===
 Route::prefix('satuan')->name('satuan.')->controller(SatuanController::class)->group(function () {
@@ -69,7 +75,9 @@ Route::prefix('satuan')->name('satuan.')->controller(SatuanController::class)->g
     Route::post('/', 'store')->name('store');
     Route::post('{id}/update', 'update')->name('update');
     Route::post('{id}/delete', 'delete')->name('delete');
+    Route::post('/check', 'check')->name('check'); // ✅ tambahan untuk AJAX duplikat (opsional)
 });
+
 
 // === Barang ===
 Route::prefix('barang')->name('barang.')->controller(BarangController::class)->group(function () {
@@ -77,6 +85,7 @@ Route::prefix('barang')->name('barang.')->controller(BarangController::class)->g
     Route::post('/', 'store')->name('store');
     Route::post('{id}/update', 'update')->name('update');
     Route::post('{id}/delete', 'delete')->name('delete');
+    Route::post('/check', 'check')->name('check'); // ✅ FIXED: jadi /barang/check
 });
 
 /*
@@ -91,21 +100,24 @@ Route::prefix('barang')->name('barang.')->controller(BarangController::class)->g
 Route::prefix('pengadaan')->name('pengadaan.')->controller(PengadaanController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
-    Route::post('/', 'store')->name('store');
-    Route::get('{id}/items', 'items')->name('items');
-    Route::post('{id}/items', 'addItem')->name('addItem');
+    Route::post('/store', 'store')->name('store');
+    Route::get('/{id}/items', 'items')->name('items'); // <— ini penting!
+    Route::post('/{id}/add-item', 'addItem')->name('addItem');
+    Route::post('/{id}/delete', 'delete')->name('delete');
 });
 
-// 📥 PENERIMAAN
+
+//  PENERIMAAN
 Route::prefix('penerimaan')->name('penerimaan.')->controller(PenerimaanController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
     Route::post('/', 'store')->name('store');
     Route::get('{id}/items', 'items')->name('items');
     Route::post('{id}/items', 'addItem')->name('addItem');
+    Route::post('{id}/confirm', 'confirm')->name('confirm'); //
 });
 
-// 💰 PENJUALAN
+//  PENJUALAN
 Route::prefix('penjualan')->name('penjualan.')->controller(PenjualanController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
@@ -114,35 +126,28 @@ Route::prefix('penjualan')->name('penjualan.')->controller(PenjualanController::
     Route::post('{id}/items', 'addItem')->name('addItem');
 });
 
-// 🔁 RETUR
-Route::prefix('retur')->name('retur.')->controller(ReturrController::class)->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::get('/create', 'create')->name('create');
-    Route::post('/', 'store')->name('store');
-    Route::get('{idretur}/items', 'items')->name('items');
-    Route::post('{idretur}/items', 'addItem')->name('addItem');
-});
-
-// 🧾 KARTU STOK
+//  KARTU STOK
 Route::prefix('kartu-stok')->name('kartu.')->controller(KartuStokController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::post('/', 'store')->name('store');
     Route::post('{id}/delete', 'delete')->name('delete');
 });
 
-// 💹 LAPORAN MARGIN PENJUALAN
-Route::prefix('margin-penjualan')->name('margin.')->controller(MarginPenjualanController::class)->group(function () {
-    Route::get('/', 'index')->name('index');
-    Route::post('/', 'store')->name('store');
-    Route::post('{id}/update', 'update')->name('update');
-    Route::post('{id}/delete', 'delete')->name('delete');
+// MARGIN PENJUALAN
+Route::prefix('margin-penjualan')->name('margin.')->group(function () {
+    Route::get('/', [MarginPenjualanController::class, 'index'])->name('index');
+    Route::post('/', [MarginPenjualanController::class, 'store'])->name('store');
+    Route::post('{id}/update', [MarginPenjualanController::class, 'update'])->name('update');
+    Route::post('{id}/delete', [MarginPenjualanController::class, 'delete'])->name('delete');
 });
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------
-| 🔧 UTILITAS STOK MANUAL (update stok)
-|--------------------------------------------------------------------------
-| Halaman update stok manual seperti di view `stok.index`
+| 🔧 UTILITAS STOK MANUAL
 |--------------------------------------------------------------------------
 */
 Route::get('/update-stok', [KartuStokController::class, 'index'])->name('stok.update');

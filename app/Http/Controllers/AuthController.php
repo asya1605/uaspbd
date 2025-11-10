@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
-    //  Tampilkan form login
+    // 🔐 Form login
     public function form()
     {
         return view('auth.login');
     }
 
-    //  Proses login (tanpa bcrypt)
+    // 🔑 Proses login (tanpa bcrypt)
     public function login(Request $r)
     {
         $r->validate([
@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        //  Ambil data user beserta role-nya
+        // 🧩 Ambil data user via raw SQL
         $user = DB::selectOne("
             SELECT u.iduser, u.username, u.password, u.idrole,
                    COALESCE(r.nama_role, 'Unknown') AS nama_role,
@@ -32,22 +32,19 @@ class AuthController extends Controller
             LIMIT 1
         ", [$r->username]);
 
-        //  Username tidak ditemukan
         if (!$user) {
             return back()->withErrors(['error' => 'Username tidak ditemukan.']);
         }
 
-        // Password salah (tanpa hash)
         if ($r->password !== $user->password) {
             return back()->withErrors(['error' => 'Password salah.']);
         }
 
-        //  Akun dinonaktifkan
         if (isset($user->status) && $user->status != 1) {
             return back()->withErrors(['error' => 'Akun dinonaktifkan.']);
         }
 
-        //  Simpan data user ke session
+        // 🧠 Simpan user ke session manual
         $r->session()->put('user', [
             'iduser'   => $user->iduser,
             'username' => $user->username,
@@ -55,19 +52,18 @@ class AuthController extends Controller
             'role'     => strtolower($user->nama_role ?? 'unknown'),
         ]);
 
-        //  Redirect ke dashboard
         return redirect()->route('dashboard');
     }
 
-    // Dashboard ringkasan data
+    // 🩷 Dashboard
     public function dashboard()
     {
         $counts = [
-            'role'   => DB::table('role')->count(),
-            'user'   => DB::table('user')->count(),
-            'vendor' => DB::table('vendor')->count(),
-            'satuan' => DB::table('satuan')->count(),
-            'barang' => DB::table('barang')->count(),
+            'role'   => DB::selectOne("SELECT COUNT(*) AS c FROM role")->c,
+            'user'   => DB::selectOne("SELECT COUNT(*) AS c FROM user")->c,
+            'vendor' => DB::selectOne("SELECT COUNT(*) AS c FROM vendor")->c,
+            'satuan' => DB::selectOne("SELECT COUNT(*) AS c FROM satuan")->c,
+            'barang' => DB::selectOne("SELECT COUNT(*) AS c FROM barang")->c,
         ];
 
         $me = session('user');
@@ -76,7 +72,7 @@ class AuthController extends Controller
         return view('dashboard.index', compact('counts', 'username'));
     }
 
-    //  Logout
+    // 🚪 Logout
     public function logout(Request $r)
     {
         $r->session()->forget('user');

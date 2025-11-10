@@ -10,16 +10,14 @@ class UserController extends Controller
     // 🧭 Tampilkan semua user
     public function index()
     {
-        // ambil semua user + nama role
         $rows = DB::select("
-            SELECT u.*, r.nama_role 
-            FROM user u 
-            JOIN role r ON r.idrole = u.idrole 
+            SELECT u.iduser, u.username, u.email, u.password, u.idrole, u.status, r.nama_role
+            FROM user u
+            JOIN role r ON r.idrole = u.idrole
             ORDER BY u.iduser DESC
         ");
 
-        // ambil semua role untuk dropdown
-        $roles = DB::select("SELECT * FROM role ORDER BY nama_role ASC");
+        $roles = DB::select("SELECT idrole, nama_role FROM role ORDER BY nama_role ASC");
 
         return view('user.index', compact('rows', 'roles'));
     }
@@ -46,11 +44,11 @@ class UserController extends Controller
             $r->status
         ]);
 
-        return redirect('/users')->with('ok', '✅ User berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('ok', '✅ User berhasil ditambahkan.');
     }
 
     // ✏️ Update user
-    public function update($id, Request $r)
+    public function update(Request $r, $id)
     {
         $r->validate([
             'username' => 'required|string|max:45',
@@ -60,8 +58,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:4|max:100'
         ]);
 
-        // Jika password diisi, update semua kolom
-        if ($r->password) {
+        if ($r->filled('password')) {
             DB::update("
                 UPDATE user 
                 SET username=?, email=?, password=?, idrole=?, status=? 
@@ -74,9 +71,7 @@ class UserController extends Controller
                 $r->status,
                 $id
             ]);
-        } 
-        // Jika password kosong, jangan ubah password
-        else {
+        } else {
             DB::update("
                 UPDATE user 
                 SET username=?, email=?, idrole=?, status=? 
@@ -90,13 +85,32 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect('/users')->with('ok', '✏️ User berhasil diperbarui.');
+        return redirect()->route('users.index')->with('ok', '✏️ User berhasil diperbarui.');
     }
 
     // 🗑️ Hapus user
     public function delete($id)
     {
         DB::delete("DELETE FROM user WHERE iduser=?", [$id]);
-        return redirect('/users')->with('ok', '🗑️ User berhasil dihapus.');
+        return redirect()->route('users.index')->with('ok', '🗑️ User berhasil dihapus.');
+    }
+
+    // 🔍 (opsional) check username/email duplicate
+    public function check(Request $r)
+    {
+        if (!$r->filled('username') && !$r->filled('email')) {
+            return response()->json(['found' => false]);
+        }
+
+        $query = DB::table('user');
+        if ($r->filled('username')) {
+            $query->where('username', $r->username);
+        }
+        if ($r->filled('email')) {
+            $query->orWhere('email', $r->email);
+        }
+
+        $exists = $query->first();
+        return response()->json(['found' => (bool) $exists]);
     }
 }

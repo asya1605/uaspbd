@@ -148,7 +148,7 @@
         <div class="dropdown-content">
           <a href="{{ route('pengadaan.index') }}">📥 Pengadaan</a>
           <a href="{{ route('penerimaan.index') }}">📦 Penerimaan</a>
-          <a href="#">♻️ Retur Barang</a>
+          <a href="{{ route('retur.index') }}">♻️ Retur Barang</a>
           <a href="{{ route('penjualan.index') }}">💄 Penjualan</a>
           <a href="{{ route('kartu.index') }}">📊 Kartu Stok</a>
         </div>
@@ -193,6 +193,50 @@
       });
     });
   </script>
+@if(session('ok'))
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let toast = document.createElement('div');
+  toast.textContent = "{{ session('ok') }}";
+  toast.style.position = 'fixed';
+  toast.style.bottom = '30px';
+  toast.style.right = '30px';
+  toast.style.background = '#ffb6c1';
+  toast.style.color = '#4b2e31';
+  toast.style.padding = '10px 18px';
+  toast.style.borderRadius = '10px';
+  toast.style.boxShadow = '0 4px 10px rgba(198,124,143,0.25)';
+  toast.style.zIndex = '9999';
+  toast.style.fontWeight = '600';
+  toast.style.transition = 'all 0.3s';
+  toast.style.opacity = '0';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.opacity = '1', 100);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(()=>toast.remove(),300); }, 3500);
+});
+</script>
+@endif
+
+@if(session('ok'))
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let toast = document.createElement('div');
+  toast.textContent = "{{ session('ok') }}";
+  toast.style.position = 'fixed';
+  toast.style.bottom = '30px';
+  toast.style.right = '30px';
+  toast.style.background = '#ffb6c1';
+  toast.style.color = '#4b2e31';
+  toast.style.padding = '10px 18px';
+  toast.style.borderRadius = '10px';
+  toast.style.boxShadow = '0 4px 10px rgba(198,124,143,0.25)';
+  toast.style.zIndex = '9999';
+  toast.style.fontWeight = '600';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+});
+</script>
+@endif
 
 </body>
 </html>

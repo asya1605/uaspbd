@@ -14,35 +14,64 @@ class RoleController extends Controller
         return view('role.index', compact('rows'));
     }
 
-    // ➕ Menambah role baru
+    // ➕ Tambah role baru
     public function store(Request $r)
     {
         $r->validate([
             'nama_role' => 'required|string|max:100'
         ]);
 
+        // Cek duplikat role
+        $exists = DB::selectOne("SELECT * FROM role WHERE LOWER(nama_role) = LOWER(?)", [$r->nama_role]);
+        if ($exists) {
+            return back()->withErrors(['error' => '⚠️ Role sudah terdaftar!']);
+        }
+
         DB::insert("INSERT INTO role (nama_role) VALUES (?)", [$r->nama_role]);
 
-        return redirect('/role')->with('ok', '✅ Role berhasil ditambahkan.');
+        return redirect()->route('role.index')->with('ok', '✅ Role berhasil ditambahkan.');
     }
 
-    // ✏️ Mengubah role
-    public function update($id, Request $r)
+    // ✏️ Update role
+    public function update(Request $r, $id)
     {
         $r->validate([
             'nama_role' => 'required|string|max:100'
         ]);
 
+        // Cek duplikat nama role lain
+        $exists = DB::selectOne("
+            SELECT * FROM role WHERE LOWER(nama_role) = LOWER(?) AND idrole != ?
+        ", [$r->nama_role, $id]);
+
+        if ($exists) {
+            return back()->withErrors(['error' => '⚠️ Nama role sudah digunakan!']);
+        }
+
         DB::update("UPDATE role SET nama_role=? WHERE idrole=?", [$r->nama_role, $id]);
 
-        return redirect('/role')->with('ok', '✏️ Role berhasil diperbarui.');
+        return redirect()->route('role.index')->with('ok', '✏️ Role berhasil diperbarui.');
     }
 
-    // 🗑️ Menghapus role
+    // 🗑️ Hapus role
     public function delete($id)
     {
         DB::delete("DELETE FROM role WHERE idrole=?", [$id]);
 
-        return redirect('/role')->with('ok', '🗑️ Role berhasil dihapus.');
+        return redirect()->route('role.index')->with('ok', '🗑️ Role berhasil dihapus.');
+    }
+
+    // 🔍 AJAX cek duplikat role (opsional)
+    public function check(Request $r)
+    {
+        if (!$r->filled('nama_role')) {
+            return response()->json(['found' => false]);
+        }
+
+        $exists = DB::table('role')
+            ->whereRaw('LOWER(nama_role) = ?', [strtolower($r->nama_role)])
+            ->exists();
+
+        return response()->json(['found' => $exists]);
     }
 }

@@ -7,10 +7,14 @@ use Illuminate\Http\Request;
 
 class SatuanController extends Controller
 {
-    // 🧭 Menampilkan semua satuan
+    // 🧭 Tampilkan semua data satuan
     public function index()
     {
-        $rows = DB::select("SELECT * FROM satuan ORDER BY idsatuan DESC");
+        $rows = DB::select("
+            SELECT idsatuan, nama_satuan, status 
+            FROM satuan 
+            ORDER BY idsatuan DESC
+        ");
         return view('satuan.index', compact('rows'));
     }
 
@@ -30,11 +34,11 @@ class SatuanController extends Controller
             $r->status
         ]);
 
-        return redirect('/satuan')->with('ok', '✅ Satuan berhasil ditambahkan.');
+        return redirect()->route('satuan.index')->with('ok', '✅ Satuan berhasil ditambahkan.');
     }
 
     // ✏️ Update satuan
-    public function update($id, Request $r)
+    public function update(Request $r, $id)
     {
         $r->validate([
             'nama_satuan' => 'required|string|max:45',
@@ -43,21 +47,39 @@ class SatuanController extends Controller
 
         DB::update("
             UPDATE satuan
-            SET nama_satuan=?, status=?
-            WHERE idsatuan=?
+            SET nama_satuan = ?, status = ?
+            WHERE idsatuan = ?
         ", [
             $r->nama_satuan,
             $r->status,
             $id
         ]);
 
-        return redirect('/satuan')->with('ok', '✏️ Satuan berhasil diperbarui.');
+        return redirect()->route('satuan.index')->with('ok', '✏️ Satuan berhasil diperbarui.');
     }
 
     // 🗑️ Hapus satuan
     public function delete($id)
     {
-        DB::delete("DELETE FROM satuan WHERE idsatuan=?", [$id]);
-        return redirect('/satuan')->with('ok', '🗑️ Satuan berhasil dihapus.');
+        DB::delete("DELETE FROM satuan WHERE idsatuan = ?", [$id]);
+        return redirect()->route('satuan.index')->with('ok', '🗑️ Satuan berhasil dihapus.');
+    }
+
+    // 🔍 (Opsional) Cek duplikat satuan untuk AJAX
+    public function check(Request $r)
+    {
+        if (!$r->filled('nama_satuan')) {
+            return response()->json(['found' => false]);
+        }
+
+        $satuan = DB::table('satuan')
+            ->where('nama_satuan', $r->nama_satuan)
+            ->first();
+
+        if ($satuan) {
+            return response()->json(['found' => true, 'data' => $satuan]);
+        }
+
+        return response()->json(['found' => false]);
     }
 }

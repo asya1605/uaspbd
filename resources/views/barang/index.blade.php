@@ -1,17 +1,112 @@
 @extends('layouts.master')
-@section('title','Kelola Barang')
+@section('title', 'Kelola Barang')
 
 @section('content')
 <style>
+  /* 🌸 Wrapper */
+  .container {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 18px rgba(198,124,143,0.15);
+    padding: 30px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* 🌸 Header Tabs */
+  .header-tabs {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1d3dd;
+    padding-bottom: 12px;
+  }
+
+  .header-tabs h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #344565;
+  }
+
+  .tab-buttons {
+    display: flex;
+    gap: 10px;
+    background: #f9f6f8;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .tab-btn {
+    padding: 8px 22px;
+    font-weight: 600;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #344565;
+    transition: all 0.25s;
+  }
+
+  .tab-btn.active {
+    background: white;
+    color: #c67c8f;
+    box-shadow: inset 0 -3px 0 #c67c8f;
+  }
+
+  /* 🌸 Form */
+  .form-section {
+    margin-top: 30px;
+    display: none;
+  }
+
+  .form-section.active {
+    display: block;
+  }
+
+  form input, form select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #f8cadd;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #fffafc;
+  }
+
+  form label {
+    font-weight: 600;
+    color: #3e3e3e;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  form .form-group {
+    margin-bottom: 18px;
+  }
+
+  .btn-submit {
+    background: #ff2e76;
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 5px 10px rgba(255, 46, 118, 0.25);
+    transition: 0.3s;
+  }
+
+  .btn-submit:hover {
+    background: #ff4e8f;
+    transform: translateY(-1px);
+  }
+
   /* 🌸 Table */
   table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'Poppins', sans-serif;
-    font-size: 15px;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(198,124,143,0.15);
+    margin-top: 25px;
+    font-family: 'Poppins', sans-serif;
   }
 
   thead {
@@ -20,184 +115,223 @@
   }
 
   thead th {
-    padding: 12px;
+    padding: 10px;
     text-align: left;
     font-weight: 600;
-    letter-spacing: 0.4px;
   }
 
-  tbody tr:nth-child(even) { background: #fff4f7; }
-  tbody tr:hover { background: #ffe8ef; transition: 0.2s; }
-  tbody td { padding: 10px 12px; color: #4b2e31; vertical-align: middle; }
-
-  /* 🌸 Input & Select */
-  input[type="text"],
-  input[type="number"],
-  select {
-    border: 1px solid #fbc4d8;
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 14px;
-    background: #fff9fa;
-    transition: 0.2s ease;
+  tbody td {
+    padding: 10px;
+    background: white;
+    border-bottom: 1px solid #ffe0eb;
   }
 
-  input:focus,
-  select:focus {
-    outline: none;
-    border-color: #ff8fb2;
-    box-shadow: 0 0 5px #ffc1d4;
+  tbody tr:nth-child(even) {
+    background: #fff6f8;
   }
 
-  /* 🌸 Buttons */
   .btn {
-    border: none;
+    padding: 6px 12px;
     border-radius: 8px;
-    padding: 8px 14px;
-    font-weight: 600;
     color: white;
+    font-weight: 600;
+    border: none;
     cursor: pointer;
-    transition: 0.2s ease;
+    transition: 0.2s;
   }
 
-  .btn:hover { transform: scale(1.05); }
-
-  .btn-add { background: linear-gradient(90deg, #ff99b8, #ffaec9); }
-  .btn-update { background: linear-gradient(90deg, #6ee7b7, #34d399); }
-  .btn-delete { background: linear-gradient(90deg, #ff7b9e, #ff5178); }
-
-  /* 🌸 Cards & Header */
-  .card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(198,124,143,0.15);
-    border: 1px solid #ffd6e3;
-    padding: 24px;
-    margin-bottom: 28px;
-  }
-
-  .page-title {
-    color: #c67c8f;
-    text-align: center;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-  }
-
-  .alert-ok {
-    background: #ffe8ef;
-    color: #7a2e3c;
-    border-left: 5px solid #f69ab3;
-    padding: 10px 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-  }
-
-  .alert-err {
-    background: #ffe0e0;
-    color: #991b1b;
-    border-left: 5px solid #f87171;
-    padding: 10px 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-  }
+  .btn-update { background: #34d399; }
+  .btn-delete { background: #ff5178; margin-left: 4px; }
+  .btn-update:hover, .btn-delete:hover { transform: scale(1.05); }
 </style>
 
-<h1 class="page-title">Kelola Barang 💅</h1>
+<div class="container">
 
-@if($errors->any())
-  <div class="alert-err">{{ $errors->first() }}</div>
-@endif
-@if(session('ok'))
-  <div class="alert-ok">{{ session('ok') }}</div>
-@endif
+  {{-- 🌸 Header Tabs --}}
+  <div class="header-tabs">
+    <h2>Manage Barang</h2>
+    <div class="tab-buttons">
+      <button id="tab-create" class="tab-btn active">Create</button>
+      <button id="tab-table" class="tab-btn">Table</button>
+    </div>
+  </div>
 
-{{-- 🌷 Form tambah barang --}}
-<div class="card">
-  <form method="POST" action="{{ route('barang.store') }}"
-        style="display:grid;grid-template-columns:120px 2fr 1fr 1fr 120px 160px;gap:10px;align-items:center;">
-    @csrf
-    <select name="jenis" required>
-      <option value="">Jenis</option>
-      @foreach(['A','B','C'] as $j)
-        <option value="{{ $j }}">{{ $j }}</option>
-      @endforeach
-    </select>
+  {{-- 🌸 Create / Edit Form --}}
+  <div id="form-section" class="form-section active">
+    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Barang</h3>
 
-    <input name="nama" placeholder="Nama barang (mis. Serum, Toner...)" required>
-    <select name="idsatuan" required>
-      <option value="">Satuan</option>
-      @foreach($satuan as $s)
-        <option value="{{ $s->idsatuan }}">{{ $s->nama_satuan }}</option>
-      @endforeach
-    </select>
-    <input name="harga" type="number" min="0" step="1" placeholder="Harga">
-    <select name="status" required>
-      <option value="1">Aktif</option>
-      <option value="0">Nonaktif</option>
-    </select>
-    <button class="btn btn-add" type="submit">+ Tambah Barang</button>
-  </form>
-</div>
+    <form id="barangForm" method="POST" action="{{ route('barang.store') }}">
+      @csrf
+      <input type="hidden" id="edit_id" name="idbarang">
 
-{{-- 🌷 Tabel Barang --}}
-<div class="card">
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Jenis</th>
-        <th>Nama Barang</th>
-        <th>Satuan</th>
-        <th>Harga</th>
-        <th>Status</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse($rows as $b)
-      <tr>
-        <form method="POST" action="{{ route('barang.update',$b->idbarang) }}">
-          @csrf
+      <div class="form-group">
+        <label>Jenis Barang</label>
+        <input type="text" name="jenis" id="jenis" placeholder="Enter jenis barang" required>
+      </div>
+
+      <div class="form-group">
+        <label>Nama Barang</label>
+        <input type="text" name="nama" id="nama" placeholder="Enter nama barang" required>
+      </div>
+
+      <div class="form-group">
+        <label>Satuan</label>
+        <select name="idsatuan" id="idsatuan" required>
+          <option value="">Select Satuan</option>
+          @foreach($satuan as $s)
+            <option value="{{ $s->idsatuan }}">{{ $s->nama_satuan }}</option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Harga</label>
+        <input type="number" name="harga" id="harga" placeholder="Enter harga barang" required>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">ADD BARANG</button>
+    </form>
+  </div>
+
+  {{-- 🌸 Table Section --}}
+  <div id="table-section" class="form-section">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Jenis</th>
+          <th>Nama Barang</th>
+          <th>Satuan</th>
+          <th>Harga</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($rows as $b)
+        <tr>
           <td>{{ $b->idbarang }}</td>
+          <td>{{ $b->jenis }}</td>
+          <td>{{ $b->nama }}</td>
+          <td>{{ $b->nama_satuan }}</td>
+          <td>{{ number_format($b->harga) }}</td>
+          <td>{{ $b->status ? 'Aktif' : 'Nonaktif' }}</td>
           <td>
-            <select name="jenis">
-              @foreach(['A','B','C'] as $j)
-                <option value="{{ $j }}" {{ $b->jenis===$j?'selected':'' }}>{{ $j }}</option>
-              @endforeach
-            </select>
+            <button class="btn btn-update"
+                    onclick="editBarang('{{ $b->idbarang }}','{{ $b->jenis }}','{{ $b->nama }}','{{ $b->idsatuan }}','{{ $b->harga }}')">Edit</button>
+            <form action="{{ route('barang.delete', $b->idbarang) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus barang ini?')">
+              @csrf
+              <button type="submit" class="btn btn-delete">Hapus</button>
+            </form>
           </td>
-          <td><input name="nama" value="{{ $b->nama }}"></td>
-          <td>
-            <select name="idsatuan">
-              @foreach($satuan as $s)
-                <option value="{{ $s->idsatuan }}" {{ $b->idsatuan==$s->idsatuan?'selected':'' }}>
-                  {{ $s->nama_satuan }}
-                </option>
-              @endforeach
-            </select>
-          </td>
-          <td><input type="number" name="harga" min="0" step="1" value="{{ $b->harga }}"></td>
-          <td>
-            <select name="status">
-              <option value="1" {{ $b->status==1?'selected':'' }}>Aktif</option>
-              <option value="0" {{ $b->status==0?'selected':'' }}>Nonaktif</option>
-            </select>
-          </td>
-          <td>
-            <button class="btn btn-update" type="submit">Update</button>
-        </form>
-          <form method="POST" action="{{ route('barang.delete',$b->idbarang) }}"
-                onsubmit="return confirm('Hapus barang ini?')" style="display:inline">
-            @csrf
-            <button class="btn btn-delete" style="margin-top:6px;">Hapus</button>
-          </form>
-          </td>
-      </tr>
-      @empty
-        <tr><td colspan="7" align="center" style="padding:15px;">Belum ada data barang 😢</td></tr>
-      @endforelse
-    </tbody>
-  </table>
+        </tr>
+        @endforeach
+      </tbody>
+    </table>
+  </div>
+
 </div>
+
+<script>
+  // 🌸 Auto detect barang duplikat
+  const jenisInput = document.getElementById('jenis');
+  const namaInput  = document.getElementById('nama');
+  const hargaInput = document.getElementById('harga');
+
+  [jenisInput, namaInput, hargaInput].forEach(input => {
+    input.addEventListener('input', detectBarang);
+  });
+
+  let timeout = null;
+
+  function detectBarang() {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      const jenis = jenisInput.value.trim();
+      const nama  = namaInput.value.trim();
+      const harga = hargaInput.value.trim();
+
+      if (jenis && nama && harga) {
+        fetch(`{{ route('barang.check') }}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+          },
+          body: JSON.stringify({ jenis, nama, harga })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.found) {
+            showToast(`⚠️ Barang "${nama}" sudah terdaftar (Satuan: ${data.data.nama_satuan})`);
+            document.getElementById('idsatuan').value = data.data.idsatuan;
+            document.getElementById('edit_id').value = data.data.idbarang;
+          }
+        })
+        .catch(err => console.error(err));
+      }
+    }, 500); // delay 0.5 detik
+  }
+
+  // 🌷 Toast alert lembut
+  function showToast(message) {
+    let toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '30px';
+    toast.style.right = '30px';
+    toast.style.background = '#ffb6c1';
+    toast.style.color = '#4b2e31';
+    toast.style.padding = '10px 18px';
+    toast.style.borderRadius = '10px';
+    toast.style.boxShadow = '0 4px 10px rgba(198,124,143,0.25)';
+    toast.style.zIndex = '9999';
+    toast.style.fontWeight = '600';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  // 🌸 Tab control
+  const tabCreate = document.getElementById('tab-create');
+  const tabTable = document.getElementById('tab-table');
+  const formSection = document.getElementById('form-section');
+  const tableSection = document.getElementById('table-section');
+  const formTitle = document.getElementById('form-title');
+  const submitBtn = document.getElementById('submitBtn');
+  const barangForm = document.getElementById('barangForm');
+
+  tabCreate.addEventListener('click', () => {
+    tabCreate.classList.add('active');
+    tabTable.classList.remove('active');
+    formSection.classList.add('active');
+    tableSection.classList.remove('active');
+    resetForm();
+  });
+
+  tabTable.addEventListener('click', () => {
+    tabTable.classList.add('active');
+    tabCreate.classList.remove('active');
+    tableSection.classList.add('active');
+    formSection.classList.remove('active');
+  });
+
+  function editBarang(id, jenis, nama, satuan, harga) {
+    tabCreate.click();
+    formTitle.textContent = "Form Edit Barang";
+    submitBtn.textContent = "UPDATE BARANG";
+    barangForm.action = `/barang/${id}/update`;
+    document.getElementById('edit_id').value = id;
+    document.getElementById('jenis').value = jenis;
+    document.getElementById('nama').value = nama;
+    document.getElementById('idsatuan').value = satuan;
+    document.getElementById('harga').value = harga;
+  }
+
+  function resetForm() {
+    formTitle.textContent = "Form Input Barang";
+    submitBtn.textContent = "ADD BARANG";
+    barangForm.action = "{{ route('barang.store') }}";
+    barangForm.reset();
+  }
+</script>
 @endsection
