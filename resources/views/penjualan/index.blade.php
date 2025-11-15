@@ -93,6 +93,12 @@
     border-radius: 8px;
     margin-bottom: 12px;
   }
+
+  /* 🌸 Total emphasis */
+  .total-cell {
+    font-weight: 700;
+    color: #b91c1c;
+  }
 </style>
 
 <h1 class="page-title">Daftar Penjualan 💄</h1>
@@ -112,31 +118,43 @@
   </div>
 
   {{-- 🌷 Table --}}
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Tanggal</th>
-        <th>User</th>
-        <th>Subtotal</th>
-        <th>PPN</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse($rows as $r)
-      <tr>
-        <td>{{ $r->idpenjualan }}</td>
-        <td>{{ $r->created_at }}</td>
-        <td>{{ $r->username }}</td>
-        <td>Rp {{ number_format($r->subtotal_nilai,0,',','.') }}</td>
-        <td>Rp {{ number_format($r->ppn,0,',','.') }}</td>
-        <td><b>Rp {{ number_format($r->total_nilai,0,',','.') }}</b></td>
-      </tr>
-      @empty
-      <tr><td colspan="6" align="center" style="padding:15px;">Belum ada penjualan 😢</td></tr>
-      @endforelse
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Tanggal</th>
+      <th>User</th>
+      <th>Margin (%)</th>
+      <th>Subtotal</th>
+      <th>PPN</th>
+      <th>Total</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody>
+    @forelse($rows as $r)
+    <tr>
+      <td>{{ $r->idpenjualan }}</td>
+      <td>{{ $r->created_at }}</td>
+      <td>{{ $r->username }}</td>
+      <td>{{ $r->margin_persen ?? '-' }}%</td>
+      <td>Rp {{ number_format($r->subtotal_nilai,0,',','.') }}</td>
+      <td>Rp {{ number_format($r->ppn,0,',','.') }}</td>
+      <td class="total-cell">Rp {{ number_format($r->total_nilai,0,',','.') }}</td>
+      <td>
+        <a href="{{ route('penjualan.items', $r->idpenjualan) }}" 
+           class="btn" 
+           style="background:linear-gradient(90deg,#f9a8d4,#f472b6);padding:6px 10px;border-radius:8px;">
+          👁️ Detail
+        </a>
+      </td>
+    </tr>
+    @empty
+    <tr>
+      <td colspan="8" align="center" style="padding:15px;">Belum ada penjualan 😢</td>
+    </tr>
+    @endforelse
+  </tbody>
+</table>
 </div>
 @endsection

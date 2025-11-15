@@ -10,7 +10,7 @@ class RoleController extends Controller
     // 🧭 Menampilkan semua role
     public function index()
     {
-        $rows = DB::select("SELECT * FROM role ORDER BY idrole ASC");
+        $rows = DB::select("SELECT * FROM role ORDER BY idrole DESC");
         return view('role.index', compact('rows'));
     }
 
@@ -21,7 +21,7 @@ class RoleController extends Controller
             'nama_role' => 'required|string|max:100'
         ]);
 
-        // Cek duplikat role
+        // Cek duplikat
         $exists = DB::selectOne("SELECT * FROM role WHERE LOWER(nama_role) = LOWER(?)", [$r->nama_role]);
         if ($exists) {
             return back()->withErrors(['error' => '⚠️ Role sudah terdaftar!']);
@@ -57,11 +57,10 @@ class RoleController extends Controller
     public function delete($id)
     {
         DB::delete("DELETE FROM role WHERE idrole=?", [$id]);
-
         return redirect()->route('role.index')->with('ok', '🗑️ Role berhasil dihapus.');
     }
 
-    // 🔍 AJAX cek duplikat role (opsional)
+    // 🔍 Cek duplikat via AJAX (opsional)
     public function check(Request $r)
     {
         if (!$r->filled('nama_role')) {

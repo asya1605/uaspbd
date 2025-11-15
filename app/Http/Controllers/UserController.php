@@ -7,22 +7,37 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // 🧭 Tampilkan semua user
-    public function index()
+    /**
+     * 📋 Tampilkan semua user (aktif / semua)
+     */
+    public function index(Request $r)
     {
-        $rows = DB::select("
-            SELECT u.iduser, u.username, u.email, u.password, u.idrole, u.status, r.nama_role
-            FROM user u
-            JOIN role r ON r.idrole = u.idrole
-            ORDER BY u.iduser DESC
-        ");
+        $filter = $r->query('filter', 'aktif');
+
+        if ($filter === 'aktif') {
+            $rows = DB::select("
+                SELECT u.iduser, u.username, u.email, u.password, u.idrole, u.status, r.nama_role
+                FROM user u
+                JOIN role r ON r.idrole = u.idrole
+                WHERE u.status = 1
+                ORDER BY u.iduser DESC
+            ");
+        } else {
+            $rows = DB::select("
+                SELECT u.iduser, u.username, u.email, u.password, u.idrole, u.status, r.nama_role
+                FROM user u
+                JOIN role r ON r.idrole = u.idrole
+                ORDER BY u.iduser DESC
+            ");
+        }
 
         $roles = DB::select("SELECT idrole, nama_role FROM role ORDER BY nama_role ASC");
-
-        return view('user.index', compact('rows', 'roles'));
+        return view('user.index', compact('rows', 'roles', 'filter'));
     }
 
-    // ➕ Tambah user baru
+    /**
+     * ➕ Tambah user baru
+     */
     public function store(Request $r)
     {
         $r->validate([
@@ -30,24 +45,24 @@ class UserController extends Controller
             'email' => 'nullable|email|max:100',
             'password' => 'required|string|min:4|max:100',
             'idrole' => 'required|integer',
-            'status' => 'required|in:0,1'
         ]);
 
         DB::insert("
             INSERT INTO user (username, email, password, idrole, status)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 1)
         ", [
             $r->username,
             $r->email,
             $r->password,
-            $r->idrole,
-            $r->status
+            $r->idrole
         ]);
 
-        return redirect()->route('users.index')->with('ok', '✅ User berhasil ditambahkan.');
+        return redirect()->route('users.index')->with('ok', '✅ User baru berhasil ditambahkan.');
     }
 
-    // ✏️ Update user
+    /**
+     * ✏️ Update user
+     */
     public function update(Request $r, $id)
     {
         $r->validate([
@@ -64,12 +79,7 @@ class UserController extends Controller
                 SET username=?, email=?, password=?, idrole=?, status=? 
                 WHERE iduser=?
             ", [
-                $r->username,
-                $r->email,
-                $r->password,
-                $r->idrole,
-                $r->status,
-                $id
+                $r->username, $r->email, $r->password, $r->idrole, $r->status, $id
             ]);
         } else {
             DB::update("
@@ -77,40 +87,19 @@ class UserController extends Controller
                 SET username=?, email=?, idrole=?, status=? 
                 WHERE iduser=?
             ", [
-                $r->username,
-                $r->email,
-                $r->idrole,
-                $r->status,
-                $id
+                $r->username, $r->email, $r->idrole, $r->status, $id
             ]);
         }
 
-        return redirect()->route('users.index')->with('ok', '✏️ User berhasil diperbarui.');
+        return redirect()->route('users.index')->with('ok', '✏️ Data user berhasil diperbarui.');
     }
 
-    // 🗑️ Hapus user
+    /**
+     * 🗑️ Hapus user
+     */
     public function delete($id)
     {
         DB::delete("DELETE FROM user WHERE iduser=?", [$id]);
         return redirect()->route('users.index')->with('ok', '🗑️ User berhasil dihapus.');
-    }
-
-    // 🔍 (opsional) check username/email duplicate
-    public function check(Request $r)
-    {
-        if (!$r->filled('username') && !$r->filled('email')) {
-            return response()->json(['found' => false]);
-        }
-
-        $query = DB::table('user');
-        if ($r->filled('username')) {
-            $query->where('username', $r->username);
-        }
-        if ($r->filled('email')) {
-            $query->orWhere('email', $r->email);
-        }
-
-        $exists = $query->first();
-        return response()->json(['found' => (bool) $exists]);
     }
 }

@@ -10,25 +10,34 @@ class RequireRole
     public function handle(Request $request, Closure $next, $requiredRole)
     {
         $user = $request->session()->get('user');
-        $role = $user['role'] ?? $user['nama_role'] ?? null;
 
-        if (!$role) {
+        // Cek user login
+        if (!$user || empty($user)) {
             return redirect('/login')->withErrors(['msg' => 'Silakan login dulu.']);
         }
 
-        $ok = false;
-        if ($requiredRole === 'super_admin') {
-            $ok = ($role === 'super_admin');
-        } elseif ($requiredRole === 'admin') {
-            $ok = ($role === 'admin' || $role === 'super_admin');
-        } else {
-            $ok = ($role === $requiredRole || $role === 'super_admin');
+        // Ambil role
+        $role = $user['role'] ?? $user['nama_role'] ?? null;
+
+        if (!$role) {
+            return response('Akses ditolak: role tidak ditemukan.', 403);
         }
 
-        if (!$ok) {
-            return response('Forbidden (role tidak diizinkan).', 403);
+        // RULE: super_admin = akses penuh
+        if ($role === 'super_admin') {
+            return $next($request);
         }
 
-        return $next($request);
+        // RULE: admin = admin OR super_admin
+        if ($requiredRole === 'admin' && $role === 'admin') {
+            return $next($request);
+        }
+
+        // RULE: role spesifik
+        if ($requiredRole === $role) {
+            return $next($request);
+        }
+
+        return response('Forbidden (role tidak diizinkan).', 403);
     }
 }

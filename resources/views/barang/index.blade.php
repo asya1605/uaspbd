@@ -3,63 +3,99 @@
 
 @section('content')
 <style>
-  /* 🌸 Wrapper */
-  .container {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 18px rgba(198,124,143,0.15);
+  .page-wrapper {
+    background: linear-gradient(to bottom right, #fff5f8, #ffe9f0);
+    border-radius: 24px;
     padding: 30px 40px;
-    max-width: 1100px;
+    box-shadow: 0 6px 18px rgba(198,124,143,0.1);
     margin: 0 auto;
+    max-width: 1100px;
   }
 
-  /* 🌸 Header Tabs */
-  .header-tabs {
+  .page-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .page-header h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2e3241;
+  }
+
+  .filter-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f1d3dd;
-    padding-bottom: 12px;
+    background: #ffeef3;
+    border-radius: 16px;
+    padding: 10px 18px;
+    box-shadow: inset 0 0 5px rgba(255, 150, 180, 0.15);
+    flex-wrap: wrap;
   }
 
-  .header-tabs h2 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #344565;
-  }
-
-  .tab-buttons {
+  .filter-left {
     display: flex;
+    align-items: center;
     gap: 10px;
-    background: #f9f6f8;
-    border-radius: 12px;
-    overflow: hidden;
   }
 
-  .tab-btn {
-    padding: 8px 22px;
+  .filter-left label {
     font-weight: 600;
-    border: none;
-    background: none;
+    color: #4b2e31;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #f3b6c3;
+    border-radius: 10px;
+    background: #fff;
+    color: #4b2e31;
+    font-weight: 500;
+    font-size: 14px;
     cursor: pointer;
-    color: #344565;
-    transition: all 0.25s;
   }
 
-  .tab-btn.active {
-    background: white;
-    color: #c67c8f;
-    box-shadow: inset 0 -3px 0 #c67c8f;
+  .btn-add {
+    background: #ff2e76;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(255, 46, 118, 0.3);
+    transition: 0.2s;
   }
 
-  /* 🌸 Form */
+  .btn-add:hover { background: #ff4e8f; transform: translateY(-2px); }
+
+  .alert {
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: 500;
+  }
+
+  .alert-ok { background:#e9fff1;color:#065f46;border-left:5px solid #10b981; }
+  .alert-err { background:#ffe8ef;color:#7a2e3c;border-left:5px solid #f69ab3; }
+
   .form-section {
-    margin-top: 30px;
     display: none;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px 30px;
+    box-shadow: 0 3px 10px rgba(198,124,143,0.1);
   }
 
-  .form-section.active {
+  .form-section.active { display: block; }
+
+  form label {
+    font-weight: 600;
+    color: #3e3e3e;
     display: block;
+    margin-bottom: 5px;
   }
 
   form input, form select {
@@ -71,17 +107,6 @@
     background: #fffafc;
   }
 
-  form label {
-    font-weight: 600;
-    color: #3e3e3e;
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  form .form-group {
-    margin-bottom: 18px;
-  }
-
   .btn-submit {
     background: #ff2e76;
     color: white;
@@ -90,22 +115,25 @@
     padding: 12px;
     border-radius: 10px;
     border: none;
+    margin-top: 10px;
     box-shadow: 0 5px 10px rgba(255, 46, 118, 0.25);
     transition: 0.3s;
   }
 
-  .btn-submit:hover {
-    background: #ff4e8f;
-    transform: translateY(-1px);
+  .btn-submit:hover { background: #ff4e8f; transform: translateY(-1px); }
+
+  .table-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 25px;
+    box-shadow: 0 3px 10px rgba(198,124,143,0.1);
+    margin-top: 25px;
+    overflow-x: auto;
   }
 
-  /* 🌸 Table */
   table {
     width: 100%;
     border-collapse: collapse;
-    border-radius: 14px;
-    overflow: hidden;
-    margin-top: 25px;
     font-family: 'Poppins', sans-serif;
   }
 
@@ -122,13 +150,10 @@
 
   tbody td {
     padding: 10px;
-    background: white;
     border-bottom: 1px solid #ffe0eb;
   }
 
-  tbody tr:nth-child(even) {
-    background: #fff6f8;
-  }
+  tbody tr:nth-child(even) { background: #fff6f8; }
 
   .btn {
     padding: 6px 12px;
@@ -145,39 +170,45 @@
   .btn-update:hover, .btn-delete:hover { transform: scale(1.05); }
 </style>
 
-<div class="container">
-
-  {{-- 🌸 Header Tabs --}}
-  <div class="header-tabs">
-    <h2>Manage Barang</h2>
-    <div class="tab-buttons">
-      <button id="tab-create" class="tab-btn active">Create</button>
-      <button id="tab-table" class="tab-btn">Table</button>
-    </div>
+<div class="page-wrapper">
+  <div class="page-header">
+    <h2>Daftar Barang 🛍️</h2>
   </div>
 
-  {{-- 🌸 Create / Edit Form --}}
-  <div id="form-section" class="form-section active">
-    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Barang</h3>
+  <div class="filter-bar">
+    <div class="filter-left">
+      <label for="filter">Tampilkan:</label>
+      <select id="filter" class="filter-select" onchange="filterBarang(this.value)">
+        <option value="aktif" {{ ($filter ?? 'aktif') === 'aktif' ? 'selected' : '' }}>Barang Aktif</option>
+        <option value="all" {{ ($filter ?? '') === 'all' ? 'selected' : '' }}>Semua Barang</option>
+      </select>
+    </div>
+    <button class="btn-add" id="btnAdd">+ Tambah Barang</button>
+  </div>
 
+  @if(session('ok')) <div class="alert alert-ok">{{ session('ok') }}</div> @endif
+  @if($errors->any()) <div class="alert alert-err">{{ $errors->first() }}</div> @endif
+
+  <div id="form-section" class="form-section">
+    <h3 class="text-center text-lg font-bold text-[#344565] mb-5" id="form-title">Form Tambah Barang</h3>
     <form id="barangForm" method="POST" action="{{ route('barang.store') }}">
       @csrf
       <input type="hidden" id="edit_id" name="idbarang">
 
       <div class="form-group">
         <label>Jenis Barang</label>
-        <input type="text" name="jenis" id="jenis" placeholder="Enter jenis barang" required>
+        <input type="text" name="jenis" id="jenis" required>
       </div>
 
       <div class="form-group">
         <label>Nama Barang</label>
-        <input type="text" name="nama" id="nama" placeholder="Enter nama barang" required>
+        <input type="text" name="nama" id="nama" required>
       </div>
 
       <div class="form-group">
         <label>Satuan</label>
         <select name="idsatuan" id="idsatuan" required>
-          <option value="">Select Satuan</option>
+          <option value="">Pilih Satuan</option>
           @foreach($satuan as $s)
             <option value="{{ $s->idsatuan }}">{{ $s->nama_satuan }}</option>
           @endforeach
@@ -186,15 +217,22 @@
 
       <div class="form-group">
         <label>Harga</label>
-        <input type="number" name="harga" id="harga" placeholder="Enter harga barang" required>
+        <input type="number" name="harga" id="harga" required>
       </div>
 
-      <button type="submit" class="btn-submit" id="submitBtn">ADD BARANG</button>
+      <div class="form-group" id="status-group" style="display:none;">
+        <label>Status Barang</label>
+        <select name="status" id="status">
+          <option value="1">🟢 Aktif</option>
+          <option value="0">⚫ Nonaktif</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">SIMPAN BARANG</button>
     </form>
   </div>
 
-  {{-- 🌸 Table Section --}}
-  <div id="table-section" class="form-section">
+  <div class="table-box">
     <table>
       <thead>
         <tr>
@@ -208,115 +246,57 @@
         </tr>
       </thead>
       <tbody>
-        @foreach($rows as $b)
+        @forelse($rows as $b)
         <tr>
           <td>{{ $b->idbarang }}</td>
           <td>{{ $b->jenis }}</td>
           <td>{{ $b->nama }}</td>
           <td>{{ $b->nama_satuan }}</td>
-          <td>{{ number_format($b->harga) }}</td>
-          <td>{{ $b->status ? 'Aktif' : 'Nonaktif' }}</td>
+          <td>Rp {{ number_format($b->harga, 0, ',', '.') }}</td>
+          <td>
+            @if($b->status == 1)
+              <span style="color:#16a34a;font-weight:600;">🟢 Aktif</span>
+            @else
+              <span style="color:#a3a3a3;font-weight:600;">⚫ Nonaktif</span>
+            @endif
+          </td>
           <td>
             <button class="btn btn-update"
-                    onclick="editBarang('{{ $b->idbarang }}','{{ $b->jenis }}','{{ $b->nama }}','{{ $b->idsatuan }}','{{ $b->harga }}')">Edit</button>
+              onclick="editBarang('{{ $b->idbarang }}', '{{ $b->jenis }}', '{{ $b->nama }}', '{{ $b->idsatuan }}', '{{ $b->harga }}', '{{ $b->status }}')">Edit</button>
+
             <form action="{{ route('barang.delete', $b->idbarang) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus barang ini?')">
               @csrf
               <button type="submit" class="btn btn-delete">Hapus</button>
             </form>
           </td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="7" style="text-align:center;padding:15px;">Belum ada data barang 😢</td></tr>
+        @endforelse
       </tbody>
     </table>
   </div>
-
 </div>
 
 <script>
-  // 🌸 Auto detect barang duplikat
-  const jenisInput = document.getElementById('jenis');
-  const namaInput  = document.getElementById('nama');
-  const hargaInput = document.getElementById('harga');
-
-  [jenisInput, namaInput, hargaInput].forEach(input => {
-    input.addEventListener('input', detectBarang);
-  });
-
-  let timeout = null;
-
-  function detectBarang() {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      const jenis = jenisInput.value.trim();
-      const nama  = namaInput.value.trim();
-      const harga = hargaInput.value.trim();
-
-      if (jenis && nama && harga) {
-        fetch(`{{ route('barang.check') }}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-          },
-          body: JSON.stringify({ jenis, nama, harga })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.found) {
-            showToast(`⚠️ Barang "${nama}" sudah terdaftar (Satuan: ${data.data.nama_satuan})`);
-            document.getElementById('idsatuan').value = data.data.idsatuan;
-            document.getElementById('edit_id').value = data.data.idbarang;
-          }
-        })
-        .catch(err => console.error(err));
-      }
-    }, 500); // delay 0.5 detik
+  function filterBarang(value) {
+    window.location.href = `{{ route('barang.index') }}?filter=${value}`;
   }
 
-  // 🌷 Toast alert lembut
-  function showToast(message) {
-    let toast = document.createElement('div');
-    toast.textContent = message;
-    toast.style.position = 'fixed';
-    toast.style.bottom = '30px';
-    toast.style.right = '30px';
-    toast.style.background = '#ffb6c1';
-    toast.style.color = '#4b2e31';
-    toast.style.padding = '10px 18px';
-    toast.style.borderRadius = '10px';
-    toast.style.boxShadow = '0 4px 10px rgba(198,124,143,0.25)';
-    toast.style.zIndex = '9999';
-    toast.style.fontWeight = '600';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
-  }
-
-  // 🌸 Tab control
-  const tabCreate = document.getElementById('tab-create');
-  const tabTable = document.getElementById('tab-table');
+  const btnAdd = document.getElementById('btnAdd');
   const formSection = document.getElementById('form-section');
-  const tableSection = document.getElementById('table-section');
   const formTitle = document.getElementById('form-title');
   const submitBtn = document.getElementById('submitBtn');
   const barangForm = document.getElementById('barangForm');
+  const statusGroup = document.getElementById('status-group');
 
-  tabCreate.addEventListener('click', () => {
-    tabCreate.classList.add('active');
-    tabTable.classList.remove('active');
-    formSection.classList.add('active');
-    tableSection.classList.remove('active');
+  btnAdd.addEventListener('click', () => {
+    formSection.classList.toggle('active');
     resetForm();
   });
 
-  tabTable.addEventListener('click', () => {
-    tabTable.classList.add('active');
-    tabCreate.classList.remove('active');
-    tableSection.classList.add('active');
-    formSection.classList.remove('active');
-  });
-
-  function editBarang(id, jenis, nama, satuan, harga) {
-    tabCreate.click();
+  function editBarang(id, jenis, nama, satuan, harga, status) {
+    formSection.classList.add('active');
     formTitle.textContent = "Form Edit Barang";
     submitBtn.textContent = "UPDATE BARANG";
     barangForm.action = `/barang/${id}/update`;
@@ -325,13 +305,16 @@
     document.getElementById('nama').value = nama;
     document.getElementById('idsatuan').value = satuan;
     document.getElementById('harga').value = harga;
+    statusGroup.style.display = 'block';
+    document.getElementById('status').value = status;
   }
 
   function resetForm() {
-    formTitle.textContent = "Form Input Barang";
-    submitBtn.textContent = "ADD BARANG";
+    formTitle.textContent = "Form Tambah Barang";
+    submitBtn.textContent = "SIMPAN BARANG";
     barangForm.action = "{{ route('barang.store') }}";
     barangForm.reset();
+    statusGroup.style.display = 'none';
   }
 </script>
 @endsection

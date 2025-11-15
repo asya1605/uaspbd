@@ -3,40 +3,39 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 
 class KartuStokController extends Controller
 {
+    // 📦 Menampilkan stok terakhir semua barang
     public function index()
     {
-        $rows = DB::select("SELECT * FROM kartu_stok_vu ORDER BY idkartu DESC");
-        return view('stok.index', compact('rows'));
+        $rows = DB::select("
+            SELECT b.idbarang, b.nama, 
+                   COALESCE((
+                       SELECT stock FROM kartu_stok ks
+                       WHERE ks.idbarang = b.idbarang
+                       ORDER BY idkartu_stok DESC
+                       LIMIT 1
+                   ), 0) AS stok_terakhir
+            FROM barang b
+            ORDER BY b.nama ASC
+        ");
+
+        return view('kartu-stok.index', compact('rows'));
     }
 
-    public function store(Request $r)
+    // 🕰️ Menampilkan history stok per barang
+    public function history($idbarang)
     {
-        $r->validate([
-            'jenis_transaksi' => 'required|in:M,K,R',
-            'masuk' => 'nullable|integer|min:0',
-            'keluar' => 'nullable|integer|min:0',
-            'idbarang' => 'required|integer',
-            'idtransaksi' => 'nullable|integer'
-        ]);
+        $barang = DB::selectOne("SELECT nama FROM barang WHERE idbarang = ?", [$idbarang]);
 
-        DB::statement("CALL sp_tambah_kartu_stok(?, ?, ?, ?, ?)", [
-            $r->jenis_transaksi,
-            $r->masuk ?? 0,
-            $r->keluar ?? 0,
-            $r->idbarang,
-            $r->idtransaksi
-        ]);
+        $histories = DB::select("
+            SELECT jenis_transaksi, masuk, keluar, stock, create_at, idtransaksi
+            FROM kartu_stok
+            WHERE idbarang = ?
+            ORDER BY create_at DESC
+        ", [$idbarang]);
 
-        return back()->with('ok', '📦 Kartu stok berhasil ditambahkan.');
-    }
-
-    public function delete($id)
-    {
-        DB::delete("DELETE FROM kartu_stok WHERE idkartu=?", [$id]);
-        return back()->with('ok', '🗑️ Data kartu stok berhasil dihapus.');
+        return view('kartu-stok.history', compact('barang', 'histories', 'idbarang'));
     }
 }

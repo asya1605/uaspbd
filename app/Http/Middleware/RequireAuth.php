@@ -9,8 +9,13 @@ class RequireAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->session()->has('user')) {
-            return redirect('/login');
+        $user = $request->session()->get('user');
+
+        if (!$user || empty($user)) {
+            $request->session()->forget('user'); // bersih
+            return redirect('/login')->withErrors([
+                'msg' => 'Silakan login terlebih dahulu.'
+            ]);
         }
 
         return $next($request);

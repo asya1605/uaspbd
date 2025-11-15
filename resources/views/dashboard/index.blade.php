@@ -5,7 +5,7 @@
 @section('content')
   {{-- 🌸 Hero Section --}}
   <div class="hero relative w-full h-80 rounded-b-[40px] overflow-hidden shadow-lg">
-    <img src="https://i.pinimg.com/1200x/09/6d/31/096d313a3a5f905dec0bfa5af68271e0.jpg"
+    <img src="https://i.pinimg.com/1200x/4f/b0/47/4fb0473c9f3afe4bf015f5ca919369f5.jpg"
          alt="Shashy Beauty Banner"
          class="absolute inset-0 w-full h-full object-cover">
     <div class="absolute inset-0 bg-gradient-to-b from-pink-200/40 to-pink-100/90"></div>

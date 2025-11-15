@@ -148,9 +148,8 @@
         <div class="dropdown-content">
           <a href="{{ route('pengadaan.index') }}">📥 Pengadaan</a>
           <a href="{{ route('penerimaan.index') }}">📦 Penerimaan</a>
-          <a href="{{ route('retur.index') }}">♻️ Retur Barang</a>
           <a href="{{ route('penjualan.index') }}">💄 Penjualan</a>
-          <a href="{{ route('kartu.index') }}">📊 Kartu Stok</a>
+          <a href="{{ route('kartustok.index') }}">📊 Kartu Stok</a>
         </div>
       </div>
 

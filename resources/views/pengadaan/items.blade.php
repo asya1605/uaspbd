@@ -4,7 +4,7 @@
 @section('content')
 <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-2xl p-8">
   <h1 class="text-2xl font-bold text-rose-700 mb-5 flex items-center gap-2">
-    🧾 Detail Barang Pengadaan #{{ $idpengadaan ?? '' }}
+    🧾 Detail Barang Pengadaan #{{ $pengadaan->idpengadaan ?? '' }}
   </h1>
 
   {{-- Informasi Pengadaan --}}
@@ -12,11 +12,11 @@
   <div class="bg-pink-50 border-l-4 border-rose-400 px-4 py-3 mb-5 rounded">
     <p><b>Vendor:</b> {{ $pengadaan->nama_vendor }}</p>
     <p><b>User Input:</b> {{ $pengadaan->username }}</p>
-    <p><b>Status:</b> 
-      @if($pengadaan->status == '1')
-        <span style="color:#16a34a;font-weight:600;">Aktif</span>
+    <p><b>Status:</b>
+      @if($pengadaan->status == 'selesai')
+        <span style="color:#16a34a;font-weight:600;">🟢 Selesai</span>
       @else
-        <span style="color:#b91c1c;font-weight:600;">Nonaktif</span>
+        <span style="color:#ca8a04;font-weight:600;">🟡 Proses</span>
       @endif
     </p>
     <p><b>Total Barang:</b> {{ $pengadaan->total_barang ?? 0 }}</p>
@@ -37,44 +37,6 @@
       {{ $errors->first() }}
     </div>
   @endif
-
-  {{-- 🌸 FORM TAMBAH BARANG --}}
-  <form action="{{ route('pengadaan.addItem', $idpengadaan) }}" method="POST" class="mb-6">
-    @csrf
-    <div class="grid grid-cols-4 gap-4 mb-4">
-      <div>
-        <label class="font-semibold">Pilih Barang</label>
-        <select id="barang" name="idbarang" class="w-full border rounded-lg p-2 border-pink-200" required>
-          <option value="">-- Pilih Barang --</option>
-          @foreach(DB::select('SELECT idbarang, nama, harga FROM barang ORDER BY nama') as $b)
-            <option value="{{ $b->idbarang }}" data-harga="{{ $b->harga }}">
-              {{ $b->nama }}
-            </option>
-          @endforeach
-        </select>
-      </div>
-
-      <div>
-        <label class="font-semibold">Harga Satuan</label>
-        <input type="number" id="harga" name="harga_satuan" class="w-full border rounded-lg p-2 bg-pink-50 border-pink-200" readonly required>
-      </div>
-
-      <div>
-        <label class="font-semibold">Jumlah</label>
-        <input type="number" id="jumlah" name="jumlah" min="1" value="1" class="w-full border rounded-lg p-2 border-pink-200" required>
-      </div>
-
-      <div class="flex items-end">
-        <button type="submit" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold px-5 py-2 rounded-lg w-full">
-          Tambah Barang
-        </button>
-      </div>
-    </div>
-
-    <div id="subtotalBox" class="text-right text-gray-600 font-medium mt-2 hidden">
-      Subtotal: <span id="subtotalText" class="font-semibold text-rose-700">Rp 0</span>
-    </div>
-  </form>
 
   {{-- 🌸 TABEL DETAIL --}}
   <table class="w-full border-collapse">
@@ -99,7 +61,7 @@
       @empty
         <tr>
           <td colspan="5" align="center" class="p-4 text-gray-500">
-            Belum ada barang dalam pengadaan ini
+            Belum ada barang dalam pengadaan ini 📭
           </td>
         </tr>
       @endforelse
@@ -107,7 +69,8 @@
   </table>
 
   <div class="mt-6 flex justify-end">
-    <a href="{{ route('pengadaan.index') }}" class="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg">
+    <a href="{{ route('pengadaan.index') }}" 
+       class="bg-gray-400 hover:bg-gray-500 text-white px-5 py-2 rounded-lg">
       Kembali
     </a>
   </div>
@@ -120,17 +83,19 @@
   const subtotalBox = document.getElementById('subtotalBox');
   const subtotalText = document.getElementById('subtotalText');
 
-  barangSelect.addEventListener('change', function() {
-    const harga = this.options[this.selectedIndex].dataset.harga || 0;
-    hargaInput.value = harga;
-    updateSubtotal();
-  });
+  if (barangSelect) {
+    barangSelect.addEventListener('change', function() {
+      const harga = this.options[this.selectedIndex].dataset.harga || 0;
+      hargaInput.value = harga;
+      updateSubtotal();
+    });
 
-  jumlahInput.addEventListener('input', updateSubtotal);
+    jumlahInput.addEventListener('input', updateSubtotal);
+  }
 
   function updateSubtotal() {
-    const harga = parseInt(hargaInput.value) || 0;
-    const jumlah = parseInt(jumlahInput.value) || 0;
+    const harga = parseInt(hargaInput?.value || 0);
+    const jumlah = parseInt(jumlahInput?.value || 0);
     const subtotal = harga * jumlah;
 
     if (harga > 0 && jumlah > 0) {

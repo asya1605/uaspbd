@@ -8,26 +8,35 @@ use Illuminate\Http\Request;
 class BarangController extends Controller
 {
     /**
-     * 🌸 Tampilkan halaman utama Barang
+     * 📋 Tampilkan daftar barang dengan filter aktif / semua
      */
-    public function index()
+    public function index(Request $r)
     {
-        // Ambil semua data barang + satuan
-        $rows = DB::select("
-            SELECT b.*, s.nama_satuan
-            FROM barang b
-            JOIN satuan s ON s.idsatuan = b.idsatuan
-            ORDER BY b.idbarang DESC
-        ");
+        $filter = $r->query('filter', 'aktif');
 
-        // Ambil semua data satuan untuk dropdown
+        if ($filter === 'aktif') {
+            $rows = DB::select("
+                SELECT b.*, s.nama_satuan
+                FROM barang b
+                JOIN satuan s ON s.idsatuan = b.idsatuan
+                WHERE b.status = 1
+                ORDER BY b.idbarang DESC
+            ");
+        } else {
+            $rows = DB::select("
+                SELECT b.*, s.nama_satuan
+                FROM barang b
+                JOIN satuan s ON s.idsatuan = b.idsatuan
+                ORDER BY b.idbarang DESC
+            ");
+        }
+
         $satuan = DB::select("SELECT * FROM satuan ORDER BY nama_satuan ASC");
-
-        return view('barang.index', compact('rows', 'satuan'));
+        return view('barang.index', compact('rows', 'satuan', 'filter'));
     }
 
     /**
-     * 🌸 Simpan barang baru
+     * ➕ Tambah barang baru
      */
     public function store(Request $r)
     {
@@ -40,20 +49,19 @@ class BarangController extends Controller
 
         DB::insert("
             INSERT INTO barang (jenis, nama, idsatuan, harga, status)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 1)
         ", [
             $r->jenis,
             $r->nama,
             $r->idsatuan,
             $r->harga,
-            $r->status ?? 1
         ]);
 
-        return back()->with('ok', 'Barang berhasil ditambahkan!');
+        return redirect()->route('barang.index')->with('ok', '✅ Barang baru berhasil ditambahkan!');
     }
 
     /**
-     * 🌸 Update data barang
+     * ✏️ Update data barang (termasuk ubah status aktif/nonaktif)
      */
     public function update(Request $r, $id)
     {
@@ -62,7 +70,7 @@ class BarangController extends Controller
             'nama'     => 'required|string|max:255',
             'idsatuan' => 'required|integer',
             'harga'    => 'required|numeric|min:0',
-            'status'   => 'nullable|integer'
+            'status'   => 'required|in:0,1'
         ]);
 
         DB::update("
@@ -74,47 +82,19 @@ class BarangController extends Controller
             $r->nama,
             $r->idsatuan,
             $r->harga,
-            $r->status ?? 1,
+            $r->status,
             $id
         ]);
 
-        return back()->with('ok', 'Barang berhasil diperbarui!');
+        return redirect()->route('barang.index')->with('ok', '✏️ Barang berhasil diperbarui!');
     }
 
     /**
-     * 🌸 Cek barang duplikat (dipanggil via AJAX)
-     */
-    public function check(Request $r)
-    {
-        // Hindari query kosong
-        if (!$r->filled(['jenis', 'nama', 'harga'])) {
-            return response()->json(['found' => false]);
-        }
-
-        $barang = DB::table('barang as b')
-            ->join('satuan as s', 'b.idsatuan', '=', 's.idsatuan')
-            ->select('b.*', 's.nama_satuan')
-            ->where('b.jenis', $r->jenis)
-            ->where('b.nama', $r->nama)
-            ->where('b.harga', $r->harga)
-            ->first();
-
-        if ($barang) {
-            return response()->json([
-                'found' => true,
-                'data'  => $barang
-            ]);
-        }
-
-        return response()->json(['found' => false]);
-    }
-
-    /**
-     * 🌸 Hapus barang
+     * 🗑️ Hapus barang
      */
     public function delete($id)
     {
         DB::delete("DELETE FROM barang WHERE idbarang = ?", [$id]);
-        return back()->with('ok', 'Barang berhasil dihapus!');
+        return redirect()->route('barang.index')->with('ok', '🗑️ Barang berhasil dihapus!');
     }
 }

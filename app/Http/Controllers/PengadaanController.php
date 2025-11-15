@@ -7,37 +7,62 @@ use Illuminate\Http\Request;
 
 class PengadaanController extends Controller
 {
-    // 📋 Daftar pengadaan
-    public function index()
+    /** 📋 Daftar pengadaan dengan filter status */
+    public function index(Request $r)
     {
-        $rows = DB::select("SELECT * FROM pengadaan_vu ORDER BY idpengadaan DESC");
-        return view('pengadaan.index', compact('rows'));
+        $filter = $r->get('filter', 'all'); // default: semua
+        $where = '';
+
+        if ($filter === 'proses') {
+            $where = "WHERE p.status = 'proses'";
+        } elseif ($filter === 'selesai') {
+            $where = "WHERE p.status = 'selesai'";
+        }
+
+        $rows = DB::select("
+            SELECT p.*, v.nama_vendor, u.username
+            FROM pengadaan p
+            JOIN vendor v ON v.idvendor = p.vendor_idvendor
+            JOIN user u ON u.iduser = p.user_iduser
+            $where
+            ORDER BY p.idpengadaan DESC
+        ");
+
+        return view('pengadaan.index', compact('rows', 'filter'));
     }
 
-    // ➕ Form Tambah Pengadaan
+    /** ➕ Form Tambah Pengadaan */
     public function create()
     {
-        $vendors = DB::select("SELECT * FROM vendor ORDER BY nama_vendor");
+        // Vendor aktif
+        $vendors = DB::select("
+            SELECT idvendor, nama_vendor 
+            FROM vendor 
+            WHERE status = 1
+            ORDER BY nama_vendor
+        ");
+
+        // Barang aktif
         $barangs = DB::select("
             SELECT b.idbarang, b.nama, b.harga, s.nama_satuan
             FROM barang b
             JOIN satuan s ON s.idsatuan = b.idsatuan
             ORDER BY b.nama
         ");
+
         return view('pengadaan.create', compact('vendors', 'barangs'));
     }
 
-    // 💾 Simpan Pengadaan Baru (langsung lengkap)
+    /** 💾 Simpan pengadaan baru */
     public function store(Request $r)
     {
         $r->validate([
             'vendor_idvendor' => 'required|integer',
-            'status' => 'required|in:0,1',
             'subtotal_nilai' => 'required|numeric|min:0',
             'list_json' => 'required|string'
         ]);
 
-        // 🧍 Ambil iduser dari session login
+        // Ambil user login
         $user = session('user');
         if (!$user) {
             return redirect()->route('login.form')->withErrors(['error' => 'Silakan login terlebih dahulu.']);
@@ -45,27 +70,31 @@ class PengadaanController extends Controller
 
         $iduser = $user['iduser'];
 
-        // 🧾 Simpan data utama ke tabel pengadaan
+        // Cek vendor aktif
+        $vendor = DB::selectOne("SELECT status FROM vendor WHERE idvendor = ?", [$r->vendor_idvendor]);
+        if (!$vendor || $vendor->status != 1) {
+            return back()->withErrors(['msg' => '❌ Vendor ini sedang nonaktif dan tidak dapat digunakan untuk pengadaan.']);
+        }
+
+        // Simpan pengadaan baru (status otomatis 'proses')
         DB::statement("
             INSERT INTO pengadaan (
                 user_iduser, vendor_idvendor, status,
                 subtotal_nilai, ppn, total_nilai, total_barang, timestamp
             )
-            VALUES (?, ?, ?, ?, hitung_ppn(?), (? + hitung_ppn(?)), 0, NOW())
+            VALUES (?, ?, 'proses', ?, hitung_ppn(?), (? + hitung_ppn(?)), 0, NOW())
         ", [
             $iduser,
             $r->vendor_idvendor,
-            $r->status,
             $r->subtotal_nilai,
             $r->subtotal_nilai,
             $r->subtotal_nilai,
             $r->subtotal_nilai
         ]);
 
-        // Ambil ID pengadaan terakhir
         $idpengadaan = DB::getPdo()->lastInsertId();
 
-        // 🧩 Simpan detail barang dari list JSON (jika ada)
+        // Simpan detail barang lewat stored procedure
         $list = json_decode($r->list_json, true);
         if ($list && count($list) > 0) {
             foreach ($list as $item) {
@@ -79,35 +108,20 @@ class PengadaanController extends Controller
         }
 
         return redirect()->route('pengadaan.index')
-            ->with('ok', '✅ Pengadaan dan detail barang berhasil ditambahkan.');
+            ->with('ok', '✅ Pengadaan baru berhasil ditambahkan dan berstatus PROSES.');
     }
 
-    // 🧾 Tambah Barang dari halaman detail pengadaan
-    public function addItem($id, Request $r)
-    {
-        $r->validate([
-            'idbarang' => 'required|integer',
-            'harga_satuan' => 'required|numeric|min:0',
-            'jumlah' => 'required|integer|min:1'
-        ]);
-
-        DB::statement("CALL tambah_detail_pengadaan(?, ?, ?, ?)", [
-            $id,
-            $r->idbarang,
-            $r->harga_satuan,
-            $r->jumlah
-        ]);
-
-        return back()->with('ok', '🧾 Barang berhasil ditambahkan ke pengadaan.');
-    }
-
-    // 🔍 Detail Barang Pengadaan
+    /** 🔍 Detail barang pengadaan */
     public function items($id)
     {
-        // Ambil data pengadaan dari view
-        $pengadaan = DB::selectOne("SELECT * FROM pengadaan_vu WHERE idpengadaan = ?", [$id]);
+        $pengadaan = DB::selectOne("
+            SELECT p.*, v.nama_vendor, u.username
+            FROM pengadaan p
+            JOIN vendor v ON v.idvendor = p.vendor_idvendor
+            JOIN user u ON u.iduser = p.user_iduser
+            WHERE p.idpengadaan = ?
+        ", [$id]);
 
-        // Ambil daftar detail barang
         $items = DB::select("
             SELECT dp.iddetail_pengadaan, dp.harga_satuan, dp.jumlah, dp.sub_total,
                    b.nama AS nama_barang
@@ -116,15 +130,10 @@ class PengadaanController extends Controller
             WHERE dp.idpengadaan = ?
         ", [$id]);
 
-        // 🔧 Kirim variabel yang sesuai ke Blade
-        return view('pengadaan.items', [
-            'pengadaan' => $pengadaan,
-            'items' => $items,
-            'idpengadaan' => $id // ✅ Fix error Undefined variable $idpengadaan
-        ]);
+        return view('pengadaan.items', compact('pengadaan', 'items'));
     }
 
-    // ❌ Hapus Pengadaan
+    /** ❌ Hapus pengadaan */
     public function delete($id)
     {
         DB::statement("CALL sp_hapus_pengadaan(?)", [$id]);

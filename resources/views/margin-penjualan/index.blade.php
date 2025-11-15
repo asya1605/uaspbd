@@ -3,93 +3,102 @@
 
 @section('content')
 <style>
-  .container {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 18px rgba(198,124,143,0.15);
+  /* 🌷 Container utama */
+  .page-wrapper {
+    background: linear-gradient(to bottom right, #fff5f8, #ffe9f0);
+    border-radius: 24px;
     padding: 30px 40px;
-    max-width: 900px;
+    box-shadow: 0 6px 18px rgba(198,124,143,0.1);
     margin: 0 auto;
+    max-width: 1100px;
   }
 
-  .header-tabs {
+  /* 🌷 Header utama */
+  .page-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .page-header h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2e3241;
+  }
+
+  /* 🌸 Filter & tombol */
+  .filter-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f1d3dd;
-    padding-bottom: 12px;
+    background: #ffeef3;
+    border-radius: 16px;
+    padding: 10px 18px;
+    box-shadow: inset 0 0 5px rgba(255, 150, 180, 0.15);
+    flex-wrap: wrap;
   }
 
-  .header-tabs h2 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #344565;
-  }
-
-  .tab-buttons {
+  .filter-left {
     display: flex;
+    align-items: center;
     gap: 10px;
-    background: #f9f6f8;
-    border-radius: 12px;
-    overflow: hidden;
   }
 
-  .tab-btn {
-    padding: 8px 22px;
+  .filter-left label {
     font-weight: 600;
-    border: none;
-    background: none;
+    color: #4b2e31;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #f3b6c3;
+    border-radius: 10px;
+    background: #fff;
+    color: #4b2e31;
+    font-weight: 500;
+    font-size: 14px;
     cursor: pointer;
-    color: #344565;
-    transition: all 0.25s;
-  }
-  .tab-btn.active {
-    background: white;
-    color: #c67c8f;
-    box-shadow: inset 0 -3px 0 #c67c8f;
   }
 
-  .form-section { margin-top: 30px; display: none; }
-  .form-section.active { display: block; }
-
-  form input, form select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #f8cadd;
-    border-radius: 8px;
-    font-size: 15px;
-    background: #fffafc;
-  }
-
-  form label {
-    font-weight: 600;
-    color: #3e3e3e;
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  form .form-group { margin-bottom: 18px; }
-
-  .btn-submit {
+  .btn-add {
     background: #ff2e76;
     color: white;
     font-weight: 600;
-    width: 100%;
-    padding: 12px;
+    padding: 10px 20px;
     border-radius: 10px;
     border: none;
-    box-shadow: 0 5px 10px rgba(255, 46, 118, 0.25);
-    transition: 0.3s;
+    box-shadow: 0 4px 10px rgba(255, 46, 118, 0.3);
+    transition: 0.2s;
   }
-  .btn-submit:hover { background: #ff4e8f; transform: translateY(-1px); }
 
-  /* 🌸 Table */
+  .btn-add:hover {
+    background: #ff4e8f;
+    transform: translateY(-2px);
+  }
+
+  /* 🌸 Alert */
+  .alert {
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-weight: 500;
+  }
+  .alert-ok { background:#e9fff1;color:#065f46;border-left:5px solid #10b981; }
+  .alert-err { background:#ffe8ef;color:#7a2e3c;border-left:5px solid #f69ab3; }
+
+  /* 🌸 Table box */
+  .table-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 25px;
+    box-shadow: 0 3px 10px rgba(198,124,143,0.1);
+    margin-top: 20px;
+    overflow-x: auto;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
-    border-radius: 14px;
-    overflow: hidden;
-    margin-top: 25px;
     font-family: 'Poppins', sans-serif;
   }
 
@@ -106,42 +115,95 @@
 
   tbody td {
     padding: 10px;
-    background: white;
     border-bottom: 1px solid #ffe0eb;
   }
 
   tbody tr:nth-child(even) { background: #fff6f8; }
 
-  .btn { padding: 6px 12px; border-radius: 8px; color: white; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+  /* 🌸 Buttons */
+  .btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
   .btn-update { background: #34d399; }
   .btn-delete { background: #ff5178; margin-left: 4px; }
   .btn-update:hover, .btn-delete:hover { transform: scale(1.05); }
+
+  /* 🌸 Form add margin */
+  .form-section {
+    display: none;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px 30px;
+    box-shadow: 0 3px 10px rgba(198,124,143,0.1);
+  }
+
+  .form-section.active { display: block; }
+
+  form label {
+    font-weight: 600;
+    color: #3e3e3e;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  form input, form select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #f8cadd;
+    border-radius: 8px;
+    font-size: 15px;
+    background: #fffafc;
+  }
+
+  .btn-submit {
+    background: #ff2e76;
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    margin-top: 10px;
+    box-shadow: 0 5px 10px rgba(255, 46, 118, 0.25);
+    transition: 0.3s;
+  }
+
+  .btn-submit:hover { background: #ff4e8f; transform: translateY(-1px); }
 </style>
 
-<div class="container">
-  {{-- 🌸 Header Tabs --}}
-  <div class="header-tabs">
-    <h2>Kelola Margin Penjualan 💰</h2>
-    <div class="tab-buttons">
-      <button id="tab-create" class="tab-btn active">Create</button>
-      <button id="tab-table" class="tab-btn">Table</button>
-    </div>
+<div class="page-wrapper">
+  {{-- 🌷 Header --}}
+  <div class="page-header">
+    <h2>Daftar Margin Penjualan 💰</h2>
   </div>
 
-  {{-- 🌸 Form Input --}}
-  <div id="form-section" class="form-section active">
-    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Margin Penjualan</h3>
+  {{-- 🌷 Filter Bar --}}
+  <div class="filter-bar">
+    <div class="filter-left">
+      <label for="filter">Tampilkan:</label>
+      <select id="filter" class="filter-select" onchange="filterMargin(this.value)">
+        <option value="aktif" {{ ($filter ?? 'aktif') === 'aktif' ? 'selected' : '' }}>Margin Aktif</option>
+        <option value="all" {{ ($filter ?? '') === 'all' ? 'selected' : '' }}>Semua Margin</option>
+      </select>
+    </div>
+    <button class="btn-add" id="btnAdd">+ Tambah Margin</button>
+  </div>
 
-    @if(session('ok'))
-      <div style="background:#e9fff1;color:#065f46;border-left:5px solid #10b981;padding:10px 16px;border-radius:8px;margin-bottom:12px;">
-        {{ session('ok') }}
-      </div>
-    @endif
-    @if($errors->any())
-      <div style="background:#ffe8ef;color:#7a2e3c;border-left:5px solid #f69ab3;padding:10px 16px;border-radius:8px;margin-bottom:12px;">
-        {{ $errors->first() }}
-      </div>
-    @endif
+  {{-- 🌷 Alert --}}
+  @if(session('ok')) <div class="alert alert-ok">{{ session('ok') }}</div> @endif
+  @if($errors->any()) <div class="alert alert-err">{{ $errors->first() }}</div> @endif
+
+  {{-- 🌷 Form Input --}}
+  <div id="form-section" class="form-section">
+    <h3 class="text-center text-lg font-bold text-[#344565] mb-5" id="form-title">Form Tambah Margin Penjualan</h3>
 
     <form id="marginForm" method="POST" action="{{ route('margin.store') }}">
       @csrf
@@ -149,29 +211,31 @@
 
       <div class="form-group">
         <label>Persentase Margin (%)</label>
-        <input type="number" step="0.01" name="persentase" id="persentase" placeholder="Masukkan persentase margin (mis. 10 atau 15.5)" required>
+        <input type="number" step="0.01" name="persentase" id="persentase"
+               placeholder="Masukkan persentase margin (mis. 10 atau 15.5)" required>
       </div>
 
-      <div class="form-group">
-        <label>Status</label>
-        <select name="status" id="status" required>
-          <option value="1">Aktif</option>
-          <option value="0">Nonaktif</option>
+      <div class="form-group" id="status-group" style="display:none;">
+        <label>Status Margin</label>
+        <select name="status" id="status">
+          <option value="1">🟢 Aktif</option>
+          <option value="0">⚫ Nonaktif</option>
         </select>
       </div>
 
-      <button type="submit" class="btn-submit" id="submitBtn">ADD MARGIN</button>
+      <button type="submit" class="btn-submit" id="submitBtn">SIMPAN MARGIN</button>
     </form>
   </div>
 
-  {{-- 🌸 Table Section --}}
-  <div id="table-section" class="form-section">
+  {{-- 🌷 Table --}}
+  <div class="table-box">
     <table>
       <thead>
         <tr>
           <th>ID</th>
           <th>Persentase Margin (%)</th>
           <th>Status</th>
+          <th>Dibuat Pada</th>
           <th>Aksi</th>
         </tr>
       </thead>
@@ -180,12 +244,20 @@
         <tr>
           <td>{{ $r->idmargin }}</td>
           <td>{{ number_format($r->persentase, 2) }}</td>
-          <td>{{ $r->status == 1 ? 'Aktif' : 'Nonaktif' }}</td>
+          <td>
+            @if($r->status == 1)
+              <span style="color:#16a34a;font-weight:600;">🟢 Aktif</span>
+            @else
+              <span style="color:#a3a3a3;font-weight:600;">⚫ Nonaktif</span>
+            @endif
+          </td>
+          <td>{{ $r->created_at ?? '-' }}</td>
           <td>
             <button class="btn btn-update"
               onclick="editMargin('{{ $r->idmargin }}', '{{ $r->persentase }}', '{{ $r->status }}')">Edit</button>
 
-            <form action="{{ route('margin.delete', $r->idmargin) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus data margin ini?')">
+            <form action="{{ route('margin.delete', $r->idmargin) }}" method="POST" style="display:inline;"
+                  onsubmit="return confirm('Hapus data margin ini?')">
               @csrf
               <button type="submit" class="btn btn-delete">Hapus</button>
             </form>
@@ -193,7 +265,7 @@
         </tr>
         @empty
         <tr>
-          <td colspan="4" style="text-align:center;padding:15px;">Belum ada data margin 😢</td>
+          <td colspan="5" style="text-align:center;padding:15px;">Belum ada data margin 😢</td>
         </tr>
         @endforelse
       </tbody>
@@ -202,45 +274,40 @@
 </div>
 
 <script>
-  const tabCreate = document.getElementById('tab-create');
-  const tabTable = document.getElementById('tab-table');
+  function filterMargin(value) {
+    window.location.href = `{{ route('margin.index') }}?filter=${value}`;
+  }
+
+  const btnAdd = document.getElementById('btnAdd');
   const formSection = document.getElementById('form-section');
-  const tableSection = document.getElementById('table-section');
   const formTitle = document.getElementById('form-title');
   const submitBtn = document.getElementById('submitBtn');
   const marginForm = document.getElementById('marginForm');
+  const statusGroup = document.getElementById('status-group');
 
-  tabCreate.addEventListener('click', () => {
-    tabCreate.classList.add('active');
-    tabTable.classList.remove('active');
-    formSection.classList.add('active');
-    tableSection.classList.remove('active');
+  btnAdd.addEventListener('click', () => {
+    formSection.classList.toggle('active');
     resetForm();
   });
 
-  tabTable.addEventListener('click', () => {
-    tabTable.classList.add('active');
-    tabCreate.classList.remove('active');
-    tableSection.classList.add('active');
-    formSection.classList.remove('active');
-  });
-
   function editMargin(id, persentase, status) {
-    tabCreate.click();
+    formSection.classList.add('active');
     formTitle.textContent = "Form Edit Margin Penjualan";
     submitBtn.textContent = "UPDATE MARGIN";
     marginForm.action = `/margin-penjualan/${id}/update`;
 
     document.getElementById('edit_id').value = id;
     document.getElementById('persentase').value = persentase;
+    statusGroup.style.display = 'block';
     document.getElementById('status').value = status;
   }
 
   function resetForm() {
-    formTitle.textContent = "Form Input Margin Penjualan";
-    submitBtn.textContent = "ADD MARGIN";
+    formTitle.textContent = "Form Tambah Margin Penjualan";
+    submitBtn.textContent = "SIMPAN MARGIN";
     marginForm.action = "{{ route('margin.store') }}";
     marginForm.reset();
+    statusGroup.style.display = 'none';
   }
 </script>
 @endsection

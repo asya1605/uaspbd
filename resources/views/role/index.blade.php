@@ -3,116 +3,61 @@
 
 @section('content')
 <style>
-  .container {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 18px rgba(198,124,143,0.15);
+  .page-wrapper {
+    background: linear-gradient(to bottom right, #fff5f8, #ffe9f0);
+    border-radius: 24px;
     padding: 30px 40px;
-    max-width: 900px;
+    box-shadow: 0 6px 18px rgba(198,124,143,0.1);
     margin: 0 auto;
+    max-width: 900px;
   }
 
-  .header-tabs {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f1d3dd;
-    padding-bottom: 12px;
-  }
+  .page-header { text-align: center; margin-bottom: 25px; }
+  .page-header h2 { font-family: 'Poppins', sans-serif; font-size: 1.8rem; font-weight: 700; color: #2e3241; }
 
-  .header-tabs h2 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #344565;
+  .btn-add {
+    background: #ff2e76; color: white; font-weight: 600;
+    padding: 10px 20px; border-radius: 10px; border: none;
+    box-shadow: 0 4px 10px rgba(255,46,118,0.3); transition: 0.2s;
+    display: block; margin: 0 auto; margin-top: 10px;
   }
+  .btn-add:hover { background: #ff4e8f; transform: translateY(-2px); }
 
-  .tab-buttons {
-    display: flex;
-    gap: 10px;
-    background: #f9f6f8;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .tab-btn {
-    padding: 8px 22px;
-    font-weight: 600;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #344565;
-    transition: all 0.25s;
-  }
-  .tab-btn.active {
-    background: white;
-    color: #c67c8f;
-    box-shadow: inset 0 -3px 0 #c67c8f;
-  }
+  .alert { padding: 10px 16px; border-radius: 8px; margin-top: 15px; font-weight: 500; }
+  .alert-ok { background:#e9fff1;color:#065f46;border-left:5px solid #10b981; }
+  .alert-err { background:#ffe8ef;color:#7a2e3c;border-left:5px solid #f69ab3; }
 
   .form-section {
-    margin-top: 30px;
-    display: none;
+    display: none; margin-top: 20px; background: #fff;
+    border-radius: 16px; padding: 25px 30px;
+    box-shadow: 0 3px 10px rgba(198,124,143,0.1);
   }
   .form-section.active { display: block; }
 
+  form label { font-weight: 600; color: #3e3e3e; display: block; margin-bottom: 5px; }
   form input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #f8cadd;
-    border-radius: 8px;
-    font-size: 15px;
-    background: #fffafc;
+    width: 100%; padding: 10px 12px; border: 1px solid #f8cadd;
+    border-radius: 8px; font-size: 15px; background: #fffafc;
   }
-
-  form label {
-    font-weight: 600;
-    color: #3e3e3e;
-    display: block;
-    margin-bottom: 5px;
-  }
-
-  form .form-group { margin-bottom: 18px; }
 
   .btn-submit {
-    background: #ff2e76;
-    color: white;
-    font-weight: 600;
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    box-shadow: 0 5px 10px rgba(255, 46, 118, 0.25);
+    background: #ff2e76; color: white; font-weight: 600;
+    width: 100%; padding: 12px; border-radius: 10px; border: none;
+    margin-top: 10px; box-shadow: 0 5px 10px rgba(255,46,118,0.25);
     transition: 0.3s;
   }
   .btn-submit:hover { background: #ff4e8f; transform: translateY(-1px); }
 
-  /* 🌸 Table */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 14px;
-    overflow: hidden;
-    margin-top: 25px;
-    font-family: 'Poppins', sans-serif;
+  .table-box {
+    background: #fff; border-radius: 16px;
+    padding: 20px 25px; box-shadow: 0 3px 10px rgba(198,124,143,0.1);
+    margin-top: 25px; overflow-x: auto;
   }
 
-  thead {
-    background: linear-gradient(90deg, #fcbad3, #ffb6c1);
-    color: white;
-  }
-
-  thead th {
-    padding: 10px;
-    text-align: left;
-    font-weight: 600;
-  }
-
-  tbody td {
-    padding: 10px;
-    background: white;
-    border-bottom: 1px solid #ffe0eb;
-  }
-
+  table { width: 100%; border-collapse: collapse; font-family: 'Poppins', sans-serif; }
+  thead { background: linear-gradient(90deg, #fcbad3, #ffb6c1); color: white; }
+  thead th { padding: 10px; text-align: left; font-weight: 600; }
+  tbody td { padding: 10px; border-bottom: 1px solid #ffe0eb; }
   tbody tr:nth-child(even) { background: #fff6f8; }
 
   .btn { padding: 6px 12px; border-radius: 8px; color: white; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
@@ -121,35 +66,35 @@
   .btn-update:hover, .btn-delete:hover { transform: scale(1.05); }
 </style>
 
-<div class="container">
-  {{-- 🌸 Header Tabs --}}
-  <div class="header-tabs">
-    <h2>Kelola Role 💼</h2>
-    <div class="tab-buttons">
-      <button id="tab-create" class="tab-btn active">Create</button>
-      <button id="tab-table" class="tab-btn">Table</button>
-    </div>
+<div class="page-wrapper">
+  <div class="page-header">
+    <h2>Daftar Role 💼</h2>
   </div>
 
-  {{-- 🌸 Create Form --}}
-  <div id="form-section" class="form-section active">
-    <h3 class="text-center text-[20px] font-bold text-[#344565] mb-5" id="form-title">Form Input Role</h3>
+  <button class="btn-add" id="btnAdd">+ Tambah Role</button>
 
+  {{-- 🌸 Alert --}}
+  @if(session('ok')) <div class="alert alert-ok">{{ session('ok') }}</div> @endif
+  @if($errors->any()) <div class="alert alert-err">{{ $errors->first() }}</div> @endif
+
+  {{-- 🌸 Form --}}
+  <div id="form-section" class="form-section">
+    <h3 class="text-center text-lg font-bold text-[#344565] mb-5" id="form-title">Form Tambah Role</h3>
     <form id="roleForm" method="POST" action="{{ route('role.store') }}">
       @csrf
       <input type="hidden" id="edit_id" name="idrole">
 
       <div class="form-group">
         <label>Nama Role</label>
-        <input type="text" name="nama_role" id="nama_role" placeholder="Masukkan nama role (mis. admin, kasir, manajer)" required>
+        <input type="text" name="nama_role" id="nama_role" placeholder="Masukkan nama role (mis. Admin, Kasir, Manajer)" required>
       </div>
 
-      <button type="submit" class="btn-submit" id="submitBtn">ADD ROLE</button>
+      <button type="submit" class="btn-submit" id="submitBtn">SIMPAN ROLE</button>
     </form>
   </div>
 
-  {{-- 🌸 Table Section --}}
-  <div id="table-section" class="form-section">
+  {{-- 🌸 Table --}}
+  <div class="table-box">
     <table>
       <thead>
         <tr>
@@ -159,13 +104,13 @@
         </tr>
       </thead>
       <tbody>
-        @foreach($rows as $r)
+        @forelse($rows as $r)
         <tr>
           <td>{{ $r->idrole }}</td>
           <td>{{ $r->nama_role }}</td>
           <td>
             <button class="btn btn-update"
-              onclick="editRole('{{ $r->idrole }}', '{{ $r->nama_role }}')">Edit</button>
+              onclick="editRole('{{ $r->idrole }}','{{ $r->nama_role }}')">Edit</button>
 
             <form action="{{ route('role.delete', $r->idrole) }}" method="POST" style="display:inline;" onsubmit="return confirm('Hapus role ini?')">
               @csrf
@@ -173,49 +118,38 @@
             </form>
           </td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="3" style="text-align:center;padding:15px;">Belum ada data role 😢</td></tr>
+        @endforelse
       </tbody>
     </table>
   </div>
 </div>
 
 <script>
-  const tabCreate = document.getElementById('tab-create');
-  const tabTable = document.getElementById('tab-table');
+  const btnAdd = document.getElementById('btnAdd');
   const formSection = document.getElementById('form-section');
-  const tableSection = document.getElementById('table-section');
   const formTitle = document.getElementById('form-title');
   const submitBtn = document.getElementById('submitBtn');
   const roleForm = document.getElementById('roleForm');
 
-  tabCreate.addEventListener('click', () => {
-    tabCreate.classList.add('active');
-    tabTable.classList.remove('active');
-    formSection.classList.add('active');
-    tableSection.classList.remove('active');
+  btnAdd.addEventListener('click', () => {
+    formSection.classList.toggle('active');
     resetForm();
   });
 
-  tabTable.addEventListener('click', () => {
-    tabTable.classList.add('active');
-    tabCreate.classList.remove('active');
-    tableSection.classList.add('active');
-    formSection.classList.remove('active');
-  });
-
   function editRole(id, nama_role) {
-    tabCreate.click();
+    formSection.classList.add('active');
     formTitle.textContent = "Form Edit Role";
     submitBtn.textContent = "UPDATE ROLE";
     roleForm.action = `/role/${id}/update`;
-
     document.getElementById('edit_id').value = id;
     document.getElementById('nama_role').value = nama_role;
   }
 
   function resetForm() {
-    formTitle.textContent = "Form Input Role";
-    submitBtn.textContent = "ADD ROLE";
+    formTitle.textContent = "Form Tambah Role";
+    submitBtn.textContent = "SIMPAN ROLE";
     roleForm.action = "{{ route('role.store') }}";
     roleForm.reset();
   }

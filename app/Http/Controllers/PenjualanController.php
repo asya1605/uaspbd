@@ -2,54 +2,83 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PenjualanController extends Controller
 {
-    // 📋 Daftar Penjualan
+    /** 📋 Tampilkan daftar penjualan */
     public function index()
     {
-        $rows = DB::select("SELECT * FROM penjualan_vu ORDER BY idpenjualan DESC");
+        $rows = DB::select("
+            SELECT 
+                p.idpenjualan, p.created_at, u.username, 
+                p.subtotal_nilai, p.ppn, p.total_nilai,
+                p.idmargin_penjualan, m.persen AS margin_persen
+            FROM penjualan p
+            JOIN user u ON u.iduser = p.iduser
+            LEFT JOIN margin_penjualan m ON m.idmargin_penjualan = p.idmargin_penjualan
+            ORDER BY p.idpenjualan DESC
+        ");
         return view('penjualan.index', compact('rows'));
     }
 
-    // ➕ Tambah Penjualan Baru (via SP)
+    /** ➕ Form tambah penjualan baru */
     public function create()
     {
-        $users = DB::select("SELECT iduser, username FROM user_vu WHERE status = 1 ORDER BY username");
-        return view('penjualan.create', compact('users'));
+        $barang = DB::select("
+            SELECT b.idbarang, b.nama AS nama_barang, b.harga, s.nama_satuan
+            FROM barang b
+            JOIN satuan s ON s.idsatuan = b.idsatuan
+            ORDER BY b.nama ASC
+        ");
+
+        // Ambil margin aktif
+        $margin = DB::selectOne("
+            SELECT persen FROM margin_penjualan WHERE status = 1 ORDER BY idmargin_penjualan DESC LIMIT 1
+        ");
+        $margin_persen = $margin->persen ?? 0;
+
+        return view('penjualan.create', compact('barang', 'margin_persen'));
     }
 
+    /** 💾 Simpan penjualan baru */
     public function store(Request $r)
     {
-        $r->validate(['iduser' => 'required|integer']);
-        DB::statement("CALL sp_tambah_penjualan(?)", [$r->iduser]);
-        return redirect('/penjualan')->with('ok', '✅ Penjualan berhasil dibuat.');
-    }
-
-    // 🧾 Tambah Barang ke Penjualan (via SP)
-    public function addItem($id, Request $r)
-    {
         $r->validate([
-            'idbarang' => 'required|integer',
-            'harga' => 'required|numeric|min:0',
-            'jumlah' => 'required|integer|min:1'
+            'items' => 'required|json'
         ]);
 
-        DB::statement("CALL sp_tambah_detail_penjualan(?, ?, ?, ?)", [
-            $id,
-            $r->idbarang,
-            $r->harga,
-            $r->jumlah
+        $iduser = Auth::id() ?? 1; // fallback user admin
+
+        DB::statement("CALL sp_tambah_penjualan_otomatis(?, ?)", [
+            $iduser,
+            $r->items
         ]);
 
-        return back()->with('ok', '🛍️ Barang berhasil ditambahkan ke penjualan.');
+        return redirect()->route('penjualan.index')->with('ok', '✅ Penjualan berhasil disimpan.');
     }
 
-    public function delete($id)
-    {
-        DB::statement("CALL sp_hapus_penjualan(?)", [$id]);
-        return back()->with('ok', '🗑️ Penjualan berhasil dihapus.');
-    }
+    /** 👀 Detail Penjualan */
+public function items($id)
+{
+    $penjualan = DB::selectOne("
+        SELECT p.*, u.username, m.persen AS margin_persen
+        FROM penjualan p
+        JOIN user u ON u.iduser = p.iduser
+        LEFT JOIN margin_penjualan m ON m.idmargin_penjualan = p.idmargin_penjualan
+        WHERE p.idpenjualan = ?
+    ", [$id]);
+
+    $details = DB::select("
+        SELECT d.*, b.nama AS nama_barang
+        FROM detail_penjualan d
+        JOIN barang b ON b.idbarang = d.idbarang
+        WHERE d.idpenjualan = ?
+    ", [$id]);
+
+    return view('penjualan.items', compact('penjualan', 'details'));
+}
+
 }
