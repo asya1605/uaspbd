@@ -56,21 +56,34 @@ class AuthController extends Controller
     }
 
     // 🩷 Dashboard
-    public function dashboard()
-    {
-        $counts = [
-            'role'   => DB::selectOne("SELECT COUNT(*) AS c FROM role")->c,
-            'user'   => DB::selectOne("SELECT COUNT(*) AS c FROM user")->c,
-            'vendor' => DB::selectOne("SELECT COUNT(*) AS c FROM vendor")->c,
-            'satuan' => DB::selectOne("SELECT COUNT(*) AS c FROM satuan")->c,
-            'barang' => DB::selectOne("SELECT COUNT(*) AS c FROM barang")->c,
-        ];
+public function dashboard()
+{
+    $me = session('user');
+    $username = $me['username'] ?? 'User';
 
-        $me = session('user');
-        $username = $me['username'] ?? 'User';
+    // 📌 Data Master
+    $counts = [
+        'role'   => DB::selectOne("SELECT COUNT(*) AS c FROM role")->c,
+        'user'   => DB::selectOne("SELECT COUNT(*) AS c FROM user")->c,
+        'vendor' => DB::selectOne("SELECT COUNT(*) AS c FROM vendor WHERE status = 1")->c,
+        'satuan' => DB::selectOne("SELECT COUNT(*) AS c FROM satuan")->c,
+        'barang' => DB::selectOne("SELECT COUNT(*) AS c FROM barang WHERE status = 1")->c,
+    ];
 
-        return view('dashboard.index', compact('counts', 'username'));
-    }
+    // 📊 Statistik Transaksi Otomatis
+    $stats = [
+        'pengadaan_proses'  => DB::selectOne("SELECT COUNT(*) AS c FROM pengadaan WHERE status = 'proses'")->c,
+        'pengadaan_selesai' => DB::selectOne("SELECT COUNT(*) AS c FROM pengadaan WHERE status = 'selesai'")->c,
+        'pengadaan_batal'   => DB::selectOne("SELECT COUNT(*) AS c FROM pengadaan WHERE status = 'batal'")->c,
+
+        'penerimaan_total'  => DB::selectOne("SELECT COUNT(*) AS c FROM penerimaan")->c,
+
+        'penjualan_total'   => DB::selectOne("SELECT COUNT(*) AS c FROM penjualan")->c,
+    ];
+
+    return view('dashboard.index', compact('counts', 'stats', 'username'));
+}
+
 
     // 🚪 Logout
     public function logout(Request $r)

@@ -78,6 +78,35 @@
   .status-pending { background: #facc15; color: #4b2e31; }
   .status-gagal { background: #f87171; }
 
+  .btn-main {
+      background: linear-gradient(90deg,#93c5fd,#60a5fa);
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(96,165,250,0.35);
+      transition: .2s;
+  }
+
+  .btn-main:hover {
+      opacity: .85;
+  }
+
+  .btn-confirm {
+      background: linear-gradient(90deg,#34d399,#10b981);
+      padding: 10px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(16,185,129,0.35);
+      transition: .2s;
+  }
+
+  .btn-confirm:hover {
+      opacity: .85;
+  }
 </style>
 
 <h1 class="page-title text-center">📑 Detail Penerimaan #{{ $penerimaan->idpenerimaan }}</h1>
@@ -98,6 +127,18 @@
     @endif
   </p>
 </div>
+
+{{-- 🌸 Tombol Konfirmasi (muncul hanya jika pending) --}}
+@if($penerimaan->status == 'pending')
+<div class="card" style="text-align:center;">
+    <form action="{{ route('penerimaan.confirm', $penerimaan->idpenerimaan) }}" method="POST">
+        @csrf
+        <button type="submit" class="btn-confirm">
+            ✅ Konfirmasi Penerimaan
+        </button>
+    </form>
+</div>
+@endif
 
 {{-- 🌸 Detail Barang --}}
 <div class="card">
@@ -133,8 +174,7 @@
 </div>
 
 <div style="text-align:center;margin-top:20px;">
-  <a href="{{ route('penerimaan.index') }}" class="btn-main" 
-     style="background:linear-gradient(90deg,#93c5fd,#60a5fa);padding:10px 20px;border-radius:10px;color:white;font-weight:600;text-decoration:none;box-shadow:0 4px 10px rgba(96,165,250,0.35);transition:0.2s;">
+  <a href="{{ route('penerimaan.index') }}" class="btn-main">
      ← Kembali ke Daftar
   </a>
 </div>

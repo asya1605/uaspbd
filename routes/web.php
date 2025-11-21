@@ -136,15 +136,13 @@ Route::prefix('penerimaan')->name('penerimaan.')
 
         Route::get('/', 'index')->name('index');
         Route::get('/load-barang/{id}', 'loadBarang')->name('load');
-        Route::get('/detail/{id}', 'items')->name('items');    // FIX DI SINI
+        Route::get('/detail/{id}', 'items')->name('items');
 
         Route::get('/create', 'create')->middleware('role:super_admin')->name('create');
         Route::post('/store', 'store')->middleware('role:super_admin')->name('store');
-        Route::post('/detail/{id}/add-item', 'addItem')->middleware('role:super_admin')->name('addItem');
-        Route::post('/detail/{id}/confirm', 'confirm')->middleware('role:super_admin')->name('confirm');
-    });
 
-/*
+        Route::post('/detail/{id}/confirm', 'confirm')->middleware('role:super_admin')->name('confirm');
+    });/*
 |--------------------------------------------------------------------------
 | 🛒 PENJUALAN (ADMIN & SUPER_ADMIN FULL CRUD)
 |--------------------------------------------------------------------------

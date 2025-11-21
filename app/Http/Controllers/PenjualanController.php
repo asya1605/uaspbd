@@ -25,41 +25,45 @@ class PenjualanController extends Controller
     }
 
     /** ➕ Form tambah penjualan baru */
-    public function create()
-    {
-        $barang = DB::select("
-            SELECT b.idbarang, b.nama AS nama_barang, b.harga, s.nama_satuan
-            FROM barang b
-            JOIN satuan s ON s.idsatuan = b.idsatuan
-            ORDER BY b.nama ASC
-        ");
+public function create()
+{
+    $barang = DB::select("
+        SELECT b.idbarang, b.nama AS nama_barang, b.harga, s.nama_satuan
+        FROM barang b
+        JOIN satuan s ON s.idsatuan = b.idsatuan
+        WHERE b.status = 1      -- 💗 hanya barang aktif!
+        ORDER BY b.nama ASC
+    ");
 
-        // Ambil margin aktif
-        $margin = DB::selectOne("
-            SELECT persen FROM margin_penjualan WHERE status = 1 ORDER BY idmargin_penjualan DESC LIMIT 1
-        ");
-        $margin_persen = $margin->persen ?? 0;
+    // Ambil margin aktif
+    $margin = DB::selectOne("
+        SELECT persen FROM margin_penjualan 
+        WHERE status = 1 
+        ORDER BY idmargin_penjualan DESC 
+        LIMIT 1
+    ");
+    $margin_persen = $margin->persen ?? 0;
 
-        return view('penjualan.create', compact('barang', 'margin_persen'));
-    }
+    return view('penjualan.create', compact('barang', 'margin_persen'));
+}
 
     /** 💾 Simpan penjualan baru */
-    public function store(Request $r)
-    {
-        $r->validate([
-            'items' => 'required|json'
-        ]);
+public function store(Request $r)
+{
+    $r->validate([
+        'items' => 'required|json'
+    ]);
 
-        $iduser = Auth::id() ?? 1; // fallback user admin
+    // 🔥 Ambil user dari session LOGIN MANUAL kamu
+    $iduser = session('user')['iduser'] ?? 1;
 
-        DB::statement("CALL sp_tambah_penjualan_otomatis(?, ?)", [
-            $iduser,
-            $r->items
-        ]);
+    DB::statement("CALL sp_tambah_penjualan_otomatis(?, ?)", [
+        $iduser,
+        $r->items
+    ]);
 
-        return redirect()->route('penjualan.index')->with('ok', '✅ Penjualan berhasil disimpan.');
-    }
-
+    return redirect()->route('penjualan.index')->with('ok', '✅ Penjualan berhasil disimpan.');
+}
     /** 👀 Detail Penjualan */
 public function items($id)
 {

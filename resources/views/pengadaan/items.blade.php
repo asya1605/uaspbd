@@ -10,15 +10,24 @@
   {{-- Informasi Pengadaan --}}
   @if($pengadaan)
   <div class="bg-pink-50 border-l-4 border-rose-400 px-4 py-3 mb-5 rounded">
+
     <p><b>Vendor:</b> {{ $pengadaan->nama_vendor }}</p>
     <p><b>User Input:</b> {{ $pengadaan->username }}</p>
-    <p><b>Status:</b>
-      @if($pengadaan->status == 'selesai')
-        <span style="color:#16a34a;font-weight:600;">🟢 Selesai</span>
-      @else
-        <span style="color:#ca8a04;font-weight:600;">🟡 Proses</span>
-      @endif
-    </p>
+
+    {{-- ⭐ STATUS OTOMATIS --}}
+<p><b>Status:</b>
+  @if($pengadaan->status === 'selesai')
+    <span class="px-3 py-1 rounded-lg text-white font-semibold" style="background:#16a34a;">
+      🟢 Selesai
+    </span>
+  @else
+    <span class="px-3 py-1 rounded-lg font-semibold" style="background:#facc15;color:#4b2e31;">
+      🟡 Proses
+    </span>
+  @endif
+</p>
+
+
     <p><b>Total Barang:</b> {{ $pengadaan->total_barang ?? 0 }}</p>
     <p><b>Total Nilai:</b> Rp {{ number_format($pengadaan->total_nilai, 0, ',', '.') }}</p>
     <p><b>PPN (10%):</b> Rp {{ number_format($pengadaan->ppn, 0, ',', '.') }}</p>
@@ -75,35 +84,4 @@
     </a>
   </div>
 </div>
-
-<script>
-  const barangSelect = document.getElementById('barang');
-  const hargaInput = document.getElementById('harga');
-  const jumlahInput = document.getElementById('jumlah');
-  const subtotalBox = document.getElementById('subtotalBox');
-  const subtotalText = document.getElementById('subtotalText');
-
-  if (barangSelect) {
-    barangSelect.addEventListener('change', function() {
-      const harga = this.options[this.selectedIndex].dataset.harga || 0;
-      hargaInput.value = harga;
-      updateSubtotal();
-    });
-
-    jumlahInput.addEventListener('input', updateSubtotal);
-  }
-
-  function updateSubtotal() {
-    const harga = parseInt(hargaInput?.value || 0);
-    const jumlah = parseInt(jumlahInput?.value || 0);
-    const subtotal = harga * jumlah;
-
-    if (harga > 0 && jumlah > 0) {
-      subtotalBox.classList.remove('hidden');
-      subtotalText.textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
-    } else {
-      subtotalBox.classList.add('hidden');
-    }
-  }
-</script>
 @endsection

@@ -128,7 +128,7 @@
         <td>{{ $r->nama_vendor }}</td>
 
         <td>
-          @if($r->status == 'selesai')
+          @if($r->real_status == 'selesai')
             <span style="color:#16a34a;font-weight:600;">🟢 Selesai</span>
           @else
             <span style="color:#ca8a04;font-weight:600;">🟡 Proses</span>

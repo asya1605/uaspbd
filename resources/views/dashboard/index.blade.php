@@ -58,37 +58,37 @@
     <p class="text-gray-600 mb-6">Data aktivitas pengadaan dan penjualan terkini:</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Pengadaan Pending</h4>
-        <p>Total pengadaan berstatus pending.</p>
-      </div>
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Pengadaan Selesai</h4>
-        <p>Total pengadaan selesai diproses.</p>
-      </div>
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Penerimaan Diretur</h4>
-        <p>Total penerimaan yang dikembalikan.</p>
-      </div>
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Pengadaan Dibatalkan</h4>
-        <p>Total pengadaan yang dicancel.</p>
-      </div>
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Pengadaan Dalam Proses</h4>
-        <p>Total pengadaan yang masih berjalan.</p>
-      </div>
-      <div class="mini-card">
-        <h2>0+</h2>
-        <h4>Penjualan Terjual</h4>
-        <p>Total penjualan berhasil.</p>
-      </div>
-    </div>
+<div class="mini-card">
+    <h2>{{ $stats['pengadaan_proses'] }}</h2>
+    <h4>Pengadaan Dalam Proses</h4>
+    <p>Total pengadaan yang masih berjalan.</p>
+</div>
+
+<div class="mini-card">
+    <h2>{{ $stats['pengadaan_selesai'] }}</h2>
+    <h4>Pengadaan Selesai</h4>
+    <p>Total pengadaan yang sudah selesai.</p>
+</div>
+
+@if($stats['pengadaan_batal'] > 0)
+<div class="mini-card">
+    <h2>{{ $stats['pengadaan_batal'] }}</h2>
+    <h4>Pengadaan Dibatalkan</h4>
+    <p>Total pengadaan yang dibatalkan.</p>
+</div>
+@endif
+
+<div class="mini-card">
+    <h2>{{ $stats['penerimaan_total'] }}</h2>
+    <h4>Total Penerimaan</h4>
+    <p>Jumlah batch penerimaan masuk.</p>
+</div>
+
+<div class="mini-card">
+    <h2>{{ $stats['penjualan_total'] }}</h2>
+    <h4>Total Penjualan</h4>
+    <p>Total transaksi penjualan berhasil.</p>
+</div>
   </section>
 
   <style>

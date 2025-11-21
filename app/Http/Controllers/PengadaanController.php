@@ -7,33 +7,69 @@ use Illuminate\Http\Request;
 
 class PengadaanController extends Controller
 {
-    /** 📋 List pengadaan */
+    /** 📋 List Pengadaan */
     public function index(Request $r)
     {
         $filter = $r->get('filter', 'all');
-        $where = "";
 
-        if ($filter === "proses") {
-            $where = "WHERE p.status = 'proses'";
-        } elseif ($filter === "selesai") {
-            $where = "WHERE p.status = 'selesai'";
+        // Filter dinamis menggunakan real-time status
+        $statusFilter = "";
+        if ($filter == "proses") {
+            $statusFilter = "HAVING real_status = 'proses'";
+        } elseif ($filter == "selesai") {
+            $statusFilter = "HAVING real_status = 'selesai'";
         }
 
+        // Query utama
         $rows = DB::select("
-            SELECT p.*, v.nama_vendor, u.username
+            SELECT 
+                p.*,
+                v.nama_vendor,
+                u.username,
+
+                -- Total pesan
+                (SELECT SUM(jumlah) 
+                 FROM detail_pengadaan dp 
+                 WHERE dp.idpengadaan = p.idpengadaan) AS total_pesan,
+
+                -- Total diterima
+                (SELECT IFNULL(SUM(dpn.jumlah_terima),0)
+                 FROM detail_penerimaan dpn
+                 JOIN penerimaan pn ON pn.idpenerimaan = dpn.idpenerimaan
+                 WHERE pn.idpengadaan = p.idpengadaan
+                 AND pn.status = 'diterima') AS total_terima,
+
+                -- Status realtime
+                CASE 
+                    WHEN (
+                        (SELECT SUM(jumlah) 
+                         FROM detail_pengadaan dp 
+                         WHERE dp.idpengadaan = p.idpengadaan)
+                        <=
+                        (SELECT IFNULL(SUM(dpn.jumlah_terima),0)
+                         FROM detail_penerimaan dpn
+                         JOIN penerimaan pn ON pn.idpenerimaan = dpn.idpenerimaan
+                         WHERE pn.idpengadaan = p.idpengadaan
+                         AND pn.status='diterima')
+                    ) THEN 'selesai'
+                    ELSE 'proses'
+                END AS real_status
+
             FROM pengadaan p
             JOIN vendor v ON v.idvendor = p.vendor_idvendor
             JOIN user u ON u.iduser = p.user_iduser
-            $where
+
+            $statusFilter
             ORDER BY p.idpengadaan DESC
         ");
 
         return view('pengadaan.index', compact('rows', 'filter'));
     }
 
-    /** ➕ Form tambah pengadaan */
+    /** ➕ Form Create Pengadaan */
     public function create()
     {
+        // Vendor aktif
         $vendors = DB::select("
             SELECT idvendor, nama_vendor 
             FROM vendor
@@ -41,17 +77,19 @@ class PengadaanController extends Controller
             ORDER BY nama_vendor
         ");
 
+        // Barang aktif saja
         $barangs = DB::select("
             SELECT b.idbarang, b.nama, b.harga, s.nama_satuan
             FROM barang b
             JOIN satuan s ON s.idsatuan = b.idsatuan
+            WHERE b.status = 1
             ORDER BY b.nama
         ");
 
         return view('pengadaan.create', compact('vendors', 'barangs'));
     }
 
-    /** 💾 Simpan pengadaan */
+    /** 💾 Simpan Pengadaan */
     public function store(Request $r)
     {
         $r->validate([
@@ -68,7 +106,7 @@ class PengadaanController extends Controller
 
         $iduser = $user['iduser'];
 
-        // Cek vendor
+        // Validasi vendor aktif
         $vendor = DB::selectOne("SELECT status FROM vendor WHERE idvendor = ?", [$r->vendor_idvendor]);
         if (!$vendor || $vendor->status != 1) {
             return back()->withErrors(['msg' => '❌ Vendor ini nonaktif.']);
@@ -92,7 +130,7 @@ class PengadaanController extends Controller
 
         $idpengadaan = DB::getPdo()->lastInsertId();
 
-        // Simpan detail barang melalui SP
+        // Simpan detail melalui SP
         $list = json_decode($r->list_json, true);
         if ($list) {
             foreach ($list as $i) {
@@ -109,32 +147,63 @@ class PengadaanController extends Controller
             ->with('ok', '✅ Pengadaan baru berhasil ditambahkan.');
     }
 
-    /** 🔍 Detail pengadaan */
-    public function items($id)
-    {
-        $pengadaan = DB::selectOne("
-            SELECT p.*, v.nama_vendor, u.username
-            FROM pengadaan p
-            JOIN vendor v ON v.idvendor = p.vendor_idvendor
-            JOIN user u ON u.iduser = p.user_iduser
-            WHERE p.idpengadaan = ?
-        ", [$id]);
+    /** 🔍 Detail Pengadaan */
+public function items($id)
+{
+    // Ambil data pengadaan
+    $pengadaan = DB::selectOne("
+        SELECT 
+            p.*,
+            v.nama_vendor,
+            u.username,
 
-        $items = DB::select("
-            SELECT dp.*, b.nama AS nama_barang
-            FROM detail_pengadaan dp
-            JOIN barang b ON b.idbarang = dp.idbarang
-            WHERE dp.idpengadaan = ?
-        ", [$id]);
+            -- Hitung total pesan
+            (SELECT SUM(jumlah) 
+             FROM detail_pengadaan dp 
+             WHERE dp.idpengadaan = p.idpengadaan) AS total_pesan,
 
-        return view('pengadaan.items', compact('pengadaan', 'items'));
+            -- Hitung total diterima (yang sudah diterima)
+            (SELECT SUM(dpn.jumlah_terima)
+             FROM detail_penerimaan dpn
+             JOIN penerimaan pn ON pn.idpenerimaan = dpn.idpenerimaan
+             WHERE pn.idpengadaan = p.idpengadaan
+               AND pn.status = 'diterima'
+            ) AS total_terima
+        FROM pengadaan p
+        JOIN vendor v ON v.idvendor = p.vendor_idvendor
+        JOIN user u ON u.iduser = p.user_iduser
+        WHERE p.idpengadaan = ?
+        LIMIT 1
+    ", [$id]);
+
+    if (!$pengadaan) {
+        return redirect()->route('pengadaan.index')
+            ->withErrors(['msg' => 'Data pengadaan tidak ditemukan']);
     }
 
-    /** ❌ Hapus pengadaan */
+    // Hitung status real-time
+    $totalPesan = intval($pengadaan->total_pesan ?? 0);
+    $totalTerima = intval($pengadaan->total_terima ?? 0);
+
+    $pengadaan->status = ($totalTerima >= $totalPesan && $totalPesan > 0)
+        ? 'selesai'
+        : 'proses';
+
+    // Ambil item pengadaan
+    $items = DB::select("
+        SELECT dp.*, b.nama AS nama_barang
+        FROM detail_pengadaan dp
+        JOIN barang b ON b.idbarang = dp.idbarang
+        WHERE dp.idpengadaan = ?
+    ", [$id]);
+
+    return view('pengadaan.items', compact('pengadaan', 'items'));
+}
+
+    /** ❌ Delete */
     public function delete($id)
     {
         DB::statement("CALL sp_hapus_pengadaan(?)", [$id]);
         return back()->with('ok', '🗑️ Pengadaan berhasil dihapus.');
     }
 }
-
