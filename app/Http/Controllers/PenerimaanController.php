@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class PenerimaanController extends Controller
 {
-    /** 📋 Index: tampilkan batch penerimaan yang sudah selesai */
+    /** 📋 List batch yang sudah diterima */
     public function index()
     {
         $rows = DB::select("
@@ -19,7 +19,7 @@ class PenerimaanController extends Controller
             ORDER BY pr.idpenerimaan DESC
         ");
 
-        // 🔍 Cek apakah masih ada pengadaan yang belum selesai atau masih ada sisa
+        // Cek apakah masih ada pengadaan yang punya sisa barang
         $cek = DB::selectOne("
             SELECT COUNT(*) AS total
             FROM pengadaan p
@@ -30,52 +30,45 @@ class PenerimaanController extends Controller
                 JOIN penerimaan pn ON pn.idpenerimaan = dpn.idpenerimaan
                 GROUP BY dpn.idbarang, pn.idpengadaan
             ) dr ON dr.idbarang = dp.idbarang AND dr.idpengadaan = dp.idpengadaan
-            WHERE p.status != 'selesai' OR dp.jumlah > IFNULL(dr.total_diterima, 0)
+            WHERE p.status != 'selesai' 
+              AND dp.jumlah > IFNULL(dr.total_diterima, 0)
         ");
 
-        $bolehTambah = ($cek && $cek->total > 0);
+        $bolehTambah = ($cek->total > 0);
 
         return view('penerimaan.index', compact('rows', 'bolehTambah'));
     }
 
-    /** ➕ Form: pilih pengadaan yang masih ada sisa */
-public function create()
-{
-    $pengadaan = DB::select("
-        SELECT DISTINCT p.idpengadaan, v.nama_vendor
-        FROM pengadaan p
-        JOIN vendor v ON v.idvendor = p.vendor_idvendor
-        JOIN detail_pengadaan dp ON dp.idpengadaan = p.idpengadaan
-        LEFT JOIN (
-            SELECT dpn.idbarang, pn.idpengadaan, SUM(dpn.jumlah_terima) AS total_diterima
-            FROM detail_penerimaan dpn
-            JOIN penerimaan pn ON pn.idpenerimaan = dpn.idpenerimaan
-            GROUP BY dpn.idbarang, pn.idpengadaan
-        ) dr ON dr.idbarang = dp.idbarang AND dr.idpengadaan = dp.idpengadaan
-        WHERE p.status != 'selesai'
-          AND EXISTS (
-              SELECT 1
-              FROM detail_pengadaan dpx
-              WHERE dpx.idpengadaan = p.idpengadaan
-              AND (dpx.jumlah > IFNULL((
-                    SELECT SUM(dpn2.jumlah_terima)
-                    FROM detail_penerimaan dpn2
-                    JOIN penerimaan pn2 ON pn2.idpenerimaan = dpn2.idpenerimaan
-                    WHERE pn2.idpengadaan = p.idpengadaan
-                      AND dpn2.idbarang = dpx.idbarang
-                ), 0))
-          )
-        ORDER BY p.idpengadaan DESC
-    ");
+    /** ➕ Form create batch penerimaan */
+    public function create()
+    {
+        $pengadaan = DB::select("
+            SELECT DISTINCT p.idpengadaan, v.nama_vendor
+            FROM pengadaan p
+            JOIN vendor v ON v.idvendor = p.vendor_idvendor
+            JOIN detail_pengadaan dp ON dp.idpengadaan = p.idpengadaan
+            WHERE p.status != 'selesai'
+              AND EXISTS (
+                  SELECT 1
+                  FROM detail_pengadaan dpx
+                  WHERE dpx.idpengadaan = p.idpengadaan
+                    AND dpx.jumlah > (
+                        SELECT IFNULL(SUM(dpn2.jumlah_terima), 0)
+                        FROM detail_penerimaan dpn2
+                        JOIN penerimaan pn2 ON pn2.idpenerimaan = dpn2.idpenerimaan
+                        WHERE pn2.idpengadaan = p.idpengadaan
+                          AND dpn2.idbarang = dpx.idbarang
+                    )
+              )
+            ORDER BY p.idpengadaan DESC
+        ");
 
-    return view('penerimaan.create', compact('pengadaan'));
-}
+        return view('penerimaan.create', compact('pengadaan'));
+    }
 
-
-    /** ⚙️ AJAX: load barang yang masih punya sisa */
+    /** 🔁 Load barang yang masih punya sisa */
     public function loadBarang($idpengadaan)
     {
-        // ✅ Revisi logika sinkron sisa barang dari seluruh batch sebelumnya
         $barang = DB::select("
             SELECT 
                 b.idbarang,
@@ -87,11 +80,11 @@ public function create()
             FROM detail_pengadaan dp
             JOIN barang b ON b.idbarang = dp.idbarang
             JOIN satuan s ON s.idsatuan = b.idsatuan
-            LEFT JOIN detail_penerimaan dpn 
+            LEFT JOIN detail_penerimaan dpn
                 ON dpn.idbarang = dp.idbarang
                 AND dpn.idpenerimaan IN (
-                    SELECT idpenerimaan 
-                    FROM penerimaan 
+                    SELECT idpenerimaan
+                    FROM penerimaan
                     WHERE idpengadaan = dp.idpengadaan
                 )
             WHERE dp.idpengadaan = ?
@@ -102,19 +95,19 @@ public function create()
         return response()->json($barang);
     }
 
-    /** 💾 Simpan batch penerimaan baru dengan pemanggilan SP */
+    /** 💾 Simpan batch penerimaan */
     public function store(Request $r)
     {
         $r->validate([
             'idpengadaan' => 'required|integer',
-            'jumlah_terima' => 'required|array'
+            'jumlah_terima' => 'required|array',
         ]);
 
         $idpengadaan = $r->idpengadaan;
         $iduser = session('user')['iduser'] ?? 1;
         $username = session('user')['username'] ?? 'superadmin';
 
-        // 🔹 Insert batch baru
+        // Insert batch baru
         DB::insert("
             INSERT INTO penerimaan (idpengadaan, iduser, username, status, created_at)
             VALUES (?, ?, ?, 'pending', NOW())
@@ -122,11 +115,10 @@ public function create()
 
         $idpenerimaan = DB::getPdo()->lastInsertId();
 
-        // 🔁 Loop semua barang dan panggil SP
+        // Loop simpan detail + update stok via SP
         foreach ($r->jumlah_terima as $idbarang => $jumlah) {
             $harga = $r->harga_terima[$idbarang] ?? 0;
 
-            // panggil SP untuk auto insert detail + update stok_awal
             DB::statement("CALL proc_tambah_detail_penerimaan(?, ?, ?, ?, ?)", [
                 $idpenerimaan,
                 $idbarang,
@@ -137,10 +129,10 @@ public function create()
         }
 
         return redirect()->route('penerimaan.index')
-            ->with('ok', '✅ Batch penerimaan baru berhasil disimpan dan stok diperbarui.');
+            ->with('ok', '✅ Batch penerimaan berhasil ditambahkan.');
     }
 
-    /** 📦 Detail penerimaan (read-only) */
+    /** 📦 Detail batch penerimaan */
     public function items($id)
     {
         $penerimaan = DB::selectOne("
@@ -153,7 +145,7 @@ public function create()
 
         if (!$penerimaan) {
             return redirect()->route('penerimaan.index')
-                ->withErrors(['msg' => '❌ Data penerimaan tidak ditemukan.']);
+                ->withErrors(['msg' => '❌ Data tidak ditemukan.']);
         }
 
         $details = DB::select("
@@ -168,3 +160,4 @@ public function create()
         return view('penerimaan.items', compact('penerimaan', 'details'));
     }
 }
+

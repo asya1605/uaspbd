@@ -7,15 +7,15 @@ use Illuminate\Http\Request;
 
 class PengadaanController extends Controller
 {
-    /** 📋 Daftar pengadaan dengan filter status */
+    /** 📋 List pengadaan */
     public function index(Request $r)
     {
-        $filter = $r->get('filter', 'all'); // default: semua
-        $where = '';
+        $filter = $r->get('filter', 'all');
+        $where = "";
 
-        if ($filter === 'proses') {
+        if ($filter === "proses") {
             $where = "WHERE p.status = 'proses'";
-        } elseif ($filter === 'selesai') {
+        } elseif ($filter === "selesai") {
             $where = "WHERE p.status = 'selesai'";
         }
 
@@ -31,18 +31,16 @@ class PengadaanController extends Controller
         return view('pengadaan.index', compact('rows', 'filter'));
     }
 
-    /** ➕ Form Tambah Pengadaan */
+    /** ➕ Form tambah pengadaan */
     public function create()
     {
-        // Vendor aktif
         $vendors = DB::select("
             SELECT idvendor, nama_vendor 
-            FROM vendor 
+            FROM vendor
             WHERE status = 1
             ORDER BY nama_vendor
         ");
 
-        // Barang aktif
         $barangs = DB::select("
             SELECT b.idbarang, b.nama, b.harga, s.nama_satuan
             FROM barang b
@@ -53,30 +51,30 @@ class PengadaanController extends Controller
         return view('pengadaan.create', compact('vendors', 'barangs'));
     }
 
-    /** 💾 Simpan pengadaan baru */
+    /** 💾 Simpan pengadaan */
     public function store(Request $r)
     {
         $r->validate([
             'vendor_idvendor' => 'required|integer',
             'subtotal_nilai' => 'required|numeric|min:0',
-            'list_json' => 'required|string'
+            'list_json' => 'required|string',
         ]);
 
-        // Ambil user login
         $user = session('user');
         if (!$user) {
-            return redirect()->route('login.form')->withErrors(['error' => 'Silakan login terlebih dahulu.']);
+            return redirect()->route('login.form')
+                ->withErrors(['error' => 'Silakan login terlebih dahulu.']);
         }
 
         $iduser = $user['iduser'];
 
-        // Cek vendor aktif
+        // Cek vendor
         $vendor = DB::selectOne("SELECT status FROM vendor WHERE idvendor = ?", [$r->vendor_idvendor]);
         if (!$vendor || $vendor->status != 1) {
-            return back()->withErrors(['msg' => '❌ Vendor ini sedang nonaktif dan tidak dapat digunakan untuk pengadaan.']);
+            return back()->withErrors(['msg' => '❌ Vendor ini nonaktif.']);
         }
 
-        // Simpan pengadaan baru (status otomatis 'proses')
+        // Insert pengadaan
         DB::statement("
             INSERT INTO pengadaan (
                 user_iduser, vendor_idvendor, status,
@@ -94,24 +92,24 @@ class PengadaanController extends Controller
 
         $idpengadaan = DB::getPdo()->lastInsertId();
 
-        // Simpan detail barang lewat stored procedure
+        // Simpan detail barang melalui SP
         $list = json_decode($r->list_json, true);
-        if ($list && count($list) > 0) {
-            foreach ($list as $item) {
+        if ($list) {
+            foreach ($list as $i) {
                 DB::statement("CALL tambah_detail_pengadaan(?, ?, ?, ?)", [
                     $idpengadaan,
-                    $item['idbarang'],
-                    $item['harga'],
-                    $item['jumlah']
+                    $i['idbarang'],
+                    $i['harga'],
+                    $i['jumlah']
                 ]);
             }
         }
 
         return redirect()->route('pengadaan.index')
-            ->with('ok', '✅ Pengadaan baru berhasil ditambahkan dan berstatus PROSES.');
+            ->with('ok', '✅ Pengadaan baru berhasil ditambahkan.');
     }
 
-    /** 🔍 Detail barang pengadaan */
+    /** 🔍 Detail pengadaan */
     public function items($id)
     {
         $pengadaan = DB::selectOne("
@@ -123,8 +121,7 @@ class PengadaanController extends Controller
         ", [$id]);
 
         $items = DB::select("
-            SELECT dp.iddetail_pengadaan, dp.harga_satuan, dp.jumlah, dp.sub_total,
-                   b.nama AS nama_barang
+            SELECT dp.*, b.nama AS nama_barang
             FROM detail_pengadaan dp
             JOIN barang b ON b.idbarang = dp.idbarang
             WHERE dp.idpengadaan = ?
@@ -140,3 +137,4 @@ class PengadaanController extends Controller
         return back()->with('ok', '🗑️ Pengadaan berhasil dihapus.');
     }
 }
+
