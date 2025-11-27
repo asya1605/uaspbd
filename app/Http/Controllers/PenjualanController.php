@@ -28,14 +28,23 @@ class PenjualanController extends Controller
 public function create()
 {
     $barang = DB::select("
-        SELECT b.idbarang, b.nama AS nama_barang, b.harga, s.nama_satuan
+        SELECT 
+            b.idbarang, 
+            b.nama AS nama_barang, 
+            b.harga, 
+            s.nama_satuan,
+            -- ambil stok terakhir dari kartu_stok
+            (SELECT stock 
+             FROM kartu_stok ks 
+             WHERE ks.idbarang = b.idbarang 
+             ORDER BY ks.idkartu_stok DESC 
+             LIMIT 1) AS stok_terakhir
         FROM barang b
         JOIN satuan s ON s.idsatuan = b.idsatuan
-        WHERE b.status = 1      -- 💗 hanya barang aktif!
+        WHERE b.status = 1
         ORDER BY b.nama ASC
     ");
 
-    // Ambil margin aktif
     $margin = DB::selectOne("
         SELECT persen FROM margin_penjualan 
         WHERE status = 1 
@@ -46,7 +55,6 @@ public function create()
 
     return view('penjualan.create', compact('barang', 'margin_persen'));
 }
-
     /** 💾 Simpan penjualan baru */
 public function store(Request $r)
 {
@@ -57,12 +65,29 @@ public function store(Request $r)
     // 🔥 Ambil user dari session LOGIN MANUAL kamu
     $iduser = session('user')['iduser'] ?? 1;
 
-    DB::statement("CALL sp_tambah_penjualan_otomatis(?, ?)", [
-        $iduser,
-        $r->items
-    ]);
+    try {
+        // Jalankan prosedur
+        DB::statement("CALL sp_tambah_penjualan_otomatis(?, ?)", [
+            $iduser,
+            $r->items
+        ]);
 
-    return redirect()->route('penjualan.index')->with('ok', '✅ Penjualan berhasil disimpan.');
+        // ✅ Jika sukses
+        return redirect()->route('penjualan.index')
+            ->with('ok', '✅ Penjualan berhasil disimpan.');
+
+    } catch (\Illuminate\Database\QueryException $e) {
+        // Tangkap pesan error dari MySQL SIGNAL
+        $errorMessage = $e->getMessage();
+
+        // Cek kalau pesan error berasal dari stok tidak cukup
+        if (str_contains($errorMessage, 'Stok tidak mencukupi')) {
+            return back()->withErrors(['msg' => $errorMessage]);
+        }
+
+        // Fallback umum
+        return back()->withErrors(['msg' => 'Terjadi kesalahan saat menyimpan penjualan.']);
+    }
 }
     /** 👀 Detail Penjualan */
 public function items($id)

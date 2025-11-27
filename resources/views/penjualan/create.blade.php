@@ -68,11 +68,51 @@
     display:block;
     margin-top:10px;
   }
+
+  /* 🌸 Alert style */
+  .alert {
+    padding:12px 16px;
+    border-radius:12px;
+    font-weight:500;
+    margin-bottom:18px;
+    text-align:center;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  .alert-error {
+    background: #ffe4ec;
+    color: #a10c40;
+    border: 1px solid #ffadc2;
+    box-shadow: 0 4px 10px rgba(255,99,132,0.1);
+  }
+  .alert-success {
+    background: #e9fdf0;
+    color: #0c6d2a;
+    border: 1px solid #bbf7d0;
+    box-shadow: 0 4px 10px rgba(16,185,129,0.1);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 
 <h1 class="page-title">💄 Tambah Transaksi Penjualan</h1>
 
 <div class="card">
+
+  {{-- 🌸 Notifikasi --}}
+  @if ($errors->any())
+      <div class="alert alert-error">
+          {{ $errors->first('msg') }}
+      </div>
+  @endif
+
+  @if (session('ok'))
+      <div class="alert alert-success">
+          {{ session('ok') }}
+      </div>
+  @endif
+
   <form id="penjualanForm" method="POST" action="{{ route('penjualan.store') }}">
     @csrf
     <input type="hidden" name="items" id="items-json">
@@ -110,11 +150,10 @@
   </form>
 </div>
 
-<!-- Tempat menyimpan JSON dari server secara aman supaya editor tidak menginterpretasi blade token di dalam JS -->
+<!-- Hidden JSON -->
 <div id="barang-data" data-json='@json($barang)' style="display:none"></div>
 
 <script>
-  // Ambil data JSON dari elemen tersembunyi
   const barangData = JSON.parse(document.getElementById('barang-data').dataset.json);
 
   const body = document.getElementById('barang-body');
@@ -122,6 +161,7 @@
   const ppnField = document.getElementById('ppn');
   const totalField = document.getElementById('total');
   const itemsJson = document.getElementById('items-json');
+  const form = document.getElementById('penjualanForm');
 
   function addRow() {
     const row = document.createElement('tr');
@@ -130,8 +170,12 @@
         <select class="barang-select" onchange="updateHarga(this)">
           <option value="">-- Pilih Barang --</option>
           ${barangData.map(b => `
-            <option value="${b.idbarang}" data-harga="${b.harga}" data-satuan="${b.nama_satuan}">
-              ${b.nama_barang}
+            <option 
+              value="${b.idbarang}" 
+              data-harga="${b.harga}" 
+              data-satuan="${b.nama_satuan}"
+              data-stok="${b.stok_terakhir ?? 0}">
+              ${b.nama_barang} (stok: ${b.stok_terakhir ?? 0})
             </option>`).join('')}
         </select>
       </td>
@@ -162,6 +206,15 @@
     const row = input.closest('tr');
     const harga = parseFloat(row.querySelector('.harga').value) || 0;
     const qty = parseFloat(input.value) || 0;
+    const stok = parseFloat(row.querySelector('.barang-select').selectedOptions[0]?.dataset.stok || 0);
+
+    // 🚫 Jika melebihi stok → alert dan reset
+    if (qty > stok) {
+      alert(`❌ Jumlah melebihi stok tersedia (${stok}). Silakan kurangi jumlah.`);
+      input.value = stok > 0 ? stok : 0;
+      return;
+    }
+
     row.querySelector('.subtotal').value = harga * qty;
     updateTotal();
   }
@@ -184,5 +237,19 @@
     });
     itemsJson.value = JSON.stringify(items);
   }
+
+  // 🚫 Cegah submit jika masih ada field invalid
+  form.addEventListener('submit', function(e) {
+    let invalid = false;
+    document.querySelectorAll('#barang-body tr').forEach(tr => {
+      const select = tr.querySelector('.barang-select');
+      const qty = parseFloat(tr.querySelector('.jumlah').value || 0);
+      const stok = parseFloat(select.selectedOptions[0]?.dataset.stok || 0);
+      if (qty > stok) invalid = true;
+    });
+    if (invalid) {
+      e.preventDefault();
+      alert('❌ Masih ada barang yang melebihi stok. Silakan periksa kembali.');
+    }
+  });
 </script>
-@endsection

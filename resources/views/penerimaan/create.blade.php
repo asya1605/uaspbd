@@ -170,7 +170,7 @@ document.getElementById('btnLoad').addEventListener('click', function() {
               <td>${d.jumlah_pesan}</td>
               <td>${d.sisa}</td>
               <td>
-                <input type="number" name="jumlah_terima[${d.idbarang}]" min="1" max="${d.sisa}" value="${d.sisa}">
+                <input type="number" min="0" name="jumlah_terima[${d.idbarang}]" class="form-control jumlah-input">
               </td>
               <td>
                 <input type="number" name="harga_terima[${d.idbarang}]" value="${d.harga_satuan}">
